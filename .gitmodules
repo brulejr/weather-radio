@@ -1,0 +1,3 @@
+[submodule "weather-radio-ms/vendor/ksb-commons"]
+	path = weather-radio-ms/vendor/ksb-commons
+	url = git@github.com:brulejr/ksb-commons.git

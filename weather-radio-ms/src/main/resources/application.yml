@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+weather-radio:
+  station-name: "NOAA Weather Radio Burlington"
+  station-call-sign: "KIG60"
+  region-name: "South Burlington, VT"
+  frequency-mhz: 162.4

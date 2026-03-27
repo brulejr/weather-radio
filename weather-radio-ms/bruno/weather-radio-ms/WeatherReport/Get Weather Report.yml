@@ -1,0 +1,15 @@
+info:
+  name: Get Weather Report
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{weather_radio_ms_url}}/api/weather/report"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,4 @@
+name: LOCAL
+variables:
+  - name: weather_radio_ms_url
+    value: http://localhost:3300

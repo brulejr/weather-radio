@@ -34,6 +34,8 @@ import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherStation
 import io.jrb.labs.weatherradio.events.PipelineEvent
 import io.jrb.labs.weatherradio.events.PipelineEventBus
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import java.time.Clock
 import java.time.Instant
 
@@ -44,7 +46,8 @@ class StubIngestionInitializer(
     systemEventBus: SystemEventBus
 ) : ControllableService(systemEventBus) {
 
-    override fun onStart() {
+    @EventListener(ApplicationReadyEvent::class)
+    fun initialize() {
         val now = Instant.now(clock)
 
         val station = WeatherStation(

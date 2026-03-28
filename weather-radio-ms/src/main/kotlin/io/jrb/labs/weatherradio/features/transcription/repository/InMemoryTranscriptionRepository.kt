@@ -22,21 +22,19 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.transcription.repository
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.domain.TranscriptSegment
+import java.util.concurrent.atomic.AtomicReference
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
+class InMemoryTranscriptionRepository : TranscriptionRepository {
+
+    private val transcriptRef = AtomicReference<TranscriptSegment?>()
+
+    override fun latestTranscript(): TranscriptSegment? = transcriptRef.get()
+
+    override fun updateTranscript(segment: TranscriptSegment) {
+        transcriptRef.set(segment)
     }
+
 }

@@ -22,21 +22,12 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.reporting
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_REPORTING
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
-}
+@ConfigurationProperties(prefix = CONFIG_PREFIX_REPORTING)
+data class ReportingDatafill(
+    val enabled: Boolean = true
+)

@@ -6,6 +6,9 @@ import io.jrb.labs.weatherradio.domain.SameEventType
 import io.jrb.labs.weatherradio.domain.SameMessage
 import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherStation
+import io.jrb.labs.weatherradio.features.radio.service.RadioService
+import io.jrb.labs.weatherradio.features.same.service.SameService
+import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
 import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -14,7 +17,9 @@ import java.time.Instant
 @Component
 class DemoDataInitializer(
     private val properties: WeatherRadioProperties,
-    private val repository: InMemoryRadioStateRepository,
+    private val sameService: SameService,
+    private val radioService: RadioService,
+    private val transcriptionService: TranscriptionService,
     private val clock: Clock
 ) {
 
@@ -29,7 +34,7 @@ class DemoDataInitializer(
             regionName = properties.regionName
         )
 
-        repository.updateRadioStatus(
+        radioService.updateRadioStatus(
             RadioSignalStatus(
                 station = station,
                 signalPresent = true,
@@ -39,7 +44,7 @@ class DemoDataInitializer(
             )
         )
 
-        repository.updateSameMessage(
+        sameService.updateSameMessage(
             SameMessage(
                 rawHeader = "ZCZC-WXR-TOR-050007,086183+0030-086183-KIG60/NWS-",
                 originator = "WXR",
@@ -52,7 +57,7 @@ class DemoDataInitializer(
             )
         )
 
-        repository.updateTranscript(
+        transcriptionService.updateTranscript(
             TranscriptSegment(
                 text = "National Weather Service Burlington Vermont. Tornado warning in effect until 4:30 PM.",
                 startedAt = now.minusSeconds(20),

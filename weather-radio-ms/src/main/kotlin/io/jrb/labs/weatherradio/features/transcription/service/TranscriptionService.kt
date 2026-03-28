@@ -22,21 +22,20 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.transcription.service
 
-import java.time.Instant
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.commons.service.ControllableService
+import io.jrb.labs.weatherradio.domain.TranscriptSegment
+import io.jrb.labs.weatherradio.features.transcription.repository.TranscriptionRepository
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+class TranscriptionService(
+    private val transcriptionRepository: TranscriptionRepository,
+    systemEventBus: SystemEventBus
+) : ControllableService(systemEventBus){
+
+    fun latestTranscript(): TranscriptSegment? = transcriptionRepository.latestTranscript()
+
+    fun updateTranscript(segment: TranscriptSegment) = transcriptionRepository.updateTranscript(segment)
+
 }

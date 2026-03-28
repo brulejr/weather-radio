@@ -3,8 +3,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 val ksbCommonsVersion: String by project
 val projectVersion: String by project
 
-val useLocalKsbCommonsString: String = "true"
-val useLocalKsbCommons: Boolean = useLocalKsbCommonsString.toBoolean()
+val useLocalKsbCommons: Boolean =
+    providers.gradleProperty("useLocalKsbCommons")
+        .map { it.toBoolean() }
+        .orElse(true)
+        .get()
 
 plugins {
     kotlin("jvm") version "2.2.10"

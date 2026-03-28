@@ -22,21 +22,38 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.events
 
-import java.time.Instant
+import io.jrb.labs.commons.eventbus.Event
+import io.jrb.labs.weatherradio.domain.RadioSignalStatus
+import io.jrb.labs.weatherradio.domain.SameMessage
+import io.jrb.labs.weatherradio.domain.TranscriptSegment
+import io.jrb.labs.weatherradio.domain.WeatherReport
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+sealed class PipelineEvent : Event {
+
+    data class AudioSegmentDetected(
+        val stationId: String,
+        val segmentId: String,
+        val audioPath: String
+    ) : PipelineEvent()
+
+    data class SameMessageDecoded(
+        val stationId: String,
+        val same: SameMessage
+    ) : PipelineEvent()
+
+    data class TranscriptProduced(
+        val stationId: String,
+        val transcript: TranscriptSegment
+    ) : PipelineEvent()
+
+    data class RadioStatusUpdated(
+        val status: RadioSignalStatus
+    ) : PipelineEvent()
+
+    data class ReportUpdated(
+        val report: WeatherReport
+    ) : PipelineEvent()
+
 }

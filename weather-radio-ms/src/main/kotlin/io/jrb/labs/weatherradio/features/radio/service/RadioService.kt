@@ -22,21 +22,20 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.radio.service
 
-import java.time.Instant
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.commons.service.ControllableService
+import io.jrb.labs.weatherradio.domain.RadioSignalStatus
+import io.jrb.labs.weatherradio.features.radio.repository.RadioStateRepository
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+class RadioService(
+    private val radioStateRepository: RadioStateRepository,
+    systemEventBus: SystemEventBus
+) : ControllableService(systemEventBus){
+
+    fun radioStatus(): RadioSignalStatus? = radioStateRepository.radioStatus()
+
+    fun updateRadioStatus(status: RadioSignalStatus) = radioStateRepository.updateRadioStatus(status)
+
 }

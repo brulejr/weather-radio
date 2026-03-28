@@ -22,21 +22,24 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.radio.api
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.domain.RadioSignalStatus
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_RADIO
+import io.jrb.labs.weatherradio.features.radio.service.RadioService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
+@RestController
+@RequestMapping("/api/weather/radio")
+@ConditionalOnProperty(prefix = CONFIG_PREFIX_RADIO, name = ["enabled"], havingValue = "true", matchIfMissing = true)
+class RadioController(
+    private val radioService: RadioService
 ) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+
+    @GetMapping("/status")
+    fun radioStatus(): RadioSignalStatus? = radioService.radioStatus()
+
 }

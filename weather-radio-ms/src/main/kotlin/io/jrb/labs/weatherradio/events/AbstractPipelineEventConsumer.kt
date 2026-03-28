@@ -22,21 +22,19 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.events
 
-import java.time.Instant
+import io.jrb.labs.commons.eventbus.AbstractEventConsumer
+import io.jrb.labs.commons.eventbus.EventBus
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import kotlin.reflect.KClass
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
-}
+abstract class AbstractPipelineEventConsumer<E : PipelineEvent>(
+    kClass: KClass<E>,
+    eventBus: EventBus<PipelineEvent>,
+    systemEventBus: SystemEventBus
+) : AbstractEventConsumer<PipelineEvent, E>(
+    kClass = kClass,
+    eventBus = eventBus,
+    systemEventBus = systemEventBus
+)

@@ -22,21 +22,19 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.same.repository
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.domain.SameMessage
+import java.util.concurrent.atomic.AtomicReference
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
+class InMemorySameRepository : SameRepository {
+
+    private val sameMessageRef = AtomicReference<SameMessage?>()
+
+    override fun latestSameMessage(): SameMessage? = sameMessageRef.get()
+
+    override fun updateSameMessage(message: SameMessage) {
+        sameMessageRef.set(message)
     }
+
 }

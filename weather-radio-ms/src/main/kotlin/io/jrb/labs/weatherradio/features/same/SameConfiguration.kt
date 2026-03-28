@@ -25,7 +25,9 @@
 package io.jrb.labs.weatherradio.features.same
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME
+import io.jrb.labs.weatherradio.features.same.messaging.SameMessageDecodedConsumer
 import io.jrb.labs.weatherradio.features.same.repository.InMemorySameRepository
 import io.jrb.labs.weatherradio.features.same.repository.SameRepository
 import io.jrb.labs.weatherradio.features.same.service.SameService
@@ -38,6 +40,13 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.same"])
 @ConditionalOnProperty(prefix = CONFIG_PREFIX_SAME, name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class SameConfiguration {
+
+    @Bean
+    fun sameMessageDecodedConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        sameService: SameService
+    ) = SameMessageDecodedConsumer(eventBus, systemEventBus, sameService)
 
     @Bean
     fun sameStateRepository(): SameRepository = InMemorySameRepository()

@@ -25,7 +25,9 @@
 package io.jrb.labs.weatherradio.features.radio
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_RADIO
+import io.jrb.labs.weatherradio.features.radio.messaging.RadioStatusUpdatedConsumer
 import io.jrb.labs.weatherradio.features.radio.repository.InMemoryRadioStateRepository
 import io.jrb.labs.weatherradio.features.radio.repository.RadioStateRepository
 import io.jrb.labs.weatherradio.features.radio.service.RadioService
@@ -38,6 +40,13 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.radio"])
 @ConditionalOnProperty(prefix = CONFIG_PREFIX_RADIO, name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class RadioConfiguration {
+
+    @Bean
+    fun radioStatusUpdatedConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        radioService: RadioService
+    ) = RadioStatusUpdatedConsumer(eventBus, systemEventBus, radioService)
 
     @Bean
     fun radioStateRepository(): RadioStateRepository = InMemoryRadioStateRepository()

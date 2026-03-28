@@ -24,29 +24,27 @@
 
 package io.jrb.labs.weatherradio.features.ingestion.service
 
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.config.WeatherRadioProperties
 import io.jrb.labs.weatherradio.domain.RadioSignalStatus
 import io.jrb.labs.weatherradio.domain.SameEventType
 import io.jrb.labs.weatherradio.domain.SameMessage
 import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherStation
-import io.jrb.labs.weatherradio.features.radio.service.RadioService
-import io.jrb.labs.weatherradio.features.same.service.SameService
-import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
-import jakarta.annotation.PostConstruct
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import java.time.Clock
 import java.time.Instant
 
 class StubIngestionInitializer(
     private val properties: WeatherRadioProperties,
-    private val sameService: SameService,
-    private val radioService: RadioService,
-    private val transcriptionService: TranscriptionService,
-    private val clock: Clock
-) {
+    private val eventBus: PipelineEventBus,
+    private val clock: Clock,
+    systemEventBus: SystemEventBus
+) : ControllableService(systemEventBus) {
 
-    @PostConstruct
-    fun init() {
+    override fun onStart() {
         val now = Instant.now(clock)
 
         val station = WeatherStation(
@@ -56,37 +54,56 @@ class StubIngestionInitializer(
             regionName = properties.regionName
         )
 
-        radioService.updateRadioStatus(
-            RadioSignalStatus(
-                station = station,
-                signalPresent = true,
-                audioActive = true,
-                lastSignalDetectedAt = now,
-                snrEstimate = 18.7
-            )
-        )
+        publishRadioStatus(now, station)
+        publishSame(now)
+        publishTranscript(now)
+    }
 
-        sameService.updateSameMessage(
-            SameMessage(
-                rawHeader = "ZCZC-WXR-TOR-050007,086183+0030-086183-KIG60/NWS-",
-                originator = "WXR",
-                eventType = SameEventType.TOR,
-                fipsCodes = listOf("050007", "086183"),
-                purgeDurationMinutes = 30,
-                issuedAt = now,
-                stationCallSign = properties.stationCallSign,
-                receivedAt = now
-            )
-        )
-
-        transcriptionService.updateTranscript(
-            TranscriptSegment(
-                text = "National Weather Service Burlington Vermont. Tornado warning in effect until 4:30 PM.",
-                startedAt = now.minusSeconds(20),
-                endedAt = now.minusSeconds(2),
-                confidence = 0.86,
-                kind = TranscriptSegment.SegmentKind.HAZARD_BULLETIN
+    private fun publishRadioStatus(now: Instant, station: WeatherStation) {
+        eventBus.send(
+            PipelineEvent.RadioStatusUpdated(
+                RadioSignalStatus(
+                    station = station,
+                    signalPresent = true,
+                    audioActive = true,
+                    lastSignalDetectedAt = now,
+                    snrEstimate = 18.7
+                )
             )
         )
     }
+
+    private fun publishSame(now: Instant) {
+        eventBus.send(
+            PipelineEvent.SameMessageDecoded(
+                stationId = properties.stationCallSign,
+                same = SameMessage(
+                    rawHeader = "ZCZC-WXR-TOR-050007,086183+0030-086183-KIG60/NWS-",
+                    originator = "WXR",
+                    eventType = SameEventType.TOR,
+                    fipsCodes = listOf("050007", "086183"),
+                    purgeDurationMinutes = 30,
+                    issuedAt = now,
+                    stationCallSign = properties.stationCallSign,
+                    receivedAt = now
+                )
+            )
+        )
+    }
+
+    private fun publishTranscript(now: Instant) {
+        eventBus.send(
+            PipelineEvent.TranscriptProduced(
+                stationId = properties.stationCallSign,
+                transcript = TranscriptSegment(
+                    text = "National Weather Service Burlington Vermont. Tornado warning in effect until 4:30 PM.",
+                    startedAt = now.minusSeconds(20),
+                    endedAt = now.minusSeconds(2),
+                    confidence = 0.86,
+                    kind = TranscriptSegment.SegmentKind.HAZARD_BULLETIN
+                )
+            )
+        )
+    }
+
 }

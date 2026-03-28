@@ -25,10 +25,12 @@
 package io.jrb.labs.weatherradio.features.transcription
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
+import io.jrb.labs.weatherradio.features.transcription.messaging.TranscriptProducedConsumer
 import io.jrb.labs.weatherradio.features.transcription.repository.InMemoryTranscriptionRepository
 import io.jrb.labs.weatherradio.features.transcription.repository.TranscriptionRepository
+import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
@@ -38,6 +40,13 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.transcription"])
 @ConditionalOnProperty(prefix = CONFIG_PREFIX_TRANSCRIPTION, name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class TranscriptionConfiguration {
+
+    @Bean
+    fun transcriptProducedConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        transcriptionService: TranscriptionService
+    ) = TranscriptProducedConsumer(eventBus, systemEventBus, transcriptionService)
 
     @Bean
     fun transcriptionRepository(): TranscriptionRepository = InMemoryTranscriptionRepository()

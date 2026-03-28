@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.ingestion
+package io.jrb.labs.weatherradio.features.same.messaging
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
-import io.jrb.labs.weatherradio.config.WeatherRadioProperties
+import io.jrb.labs.weatherradio.events.AbstractPipelineEventConsumer
+import io.jrb.labs.weatherradio.events.PipelineEvent
 import io.jrb.labs.weatherradio.events.PipelineEventBus
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
-import io.jrb.labs.weatherradio.features.ingestion.service.StubIngestionInitializer
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import java.time.Clock
+import io.jrb.labs.weatherradio.features.same.service.SameService
 
-@Configuration
-@ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.ingestion"])
-@ConditionalOnProperty(prefix = CONFIG_PREFIX_INGESTION, name = ["enabled"], havingValue = "true", matchIfMissing = true)
-class IngestionConfiguration {
+class SameMessageDecodedConsumer(
+    eventBus: PipelineEventBus,
+    systemEventBus: SystemEventBus,
+    private val sameService: SameService
+) : AbstractPipelineEventConsumer<PipelineEvent.SameMessageDecoded>(
+    PipelineEvent.SameMessageDecoded::class,
+    eventBus,
+    systemEventBus
+) {
 
-    @Bean
-    fun stubIngestionInitializer(
-        properties: WeatherRadioProperties,
-        eventBus: PipelineEventBus,
-        clock: Clock,
-        systemEventBus: SystemEventBus
-    ) = StubIngestionInitializer(properties, eventBus, clock, systemEventBus)
-
-    @Bean
-    fun ingestionInfoContributor(datafill: IngestionDatafill) = IngestionInfoContributor(datafill)
+    override suspend fun handleEvent(event: PipelineEvent.SameMessageDecoded) {
+        sameService.updateSameMessage(event.same)
+    }
 
 }

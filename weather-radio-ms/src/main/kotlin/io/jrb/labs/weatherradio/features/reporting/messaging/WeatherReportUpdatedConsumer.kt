@@ -22,38 +22,32 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.reporting.messaging
 
-import io.jrb.labs.commons.eventbus.Event
-import io.jrb.labs.weatherradio.domain.RadioSignalStatus
-import io.jrb.labs.weatherradio.domain.SameMessage
-import io.jrb.labs.weatherradio.domain.TranscriptSegment
-import io.jrb.labs.weatherradio.domain.WeatherReport
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.AbstractPipelineEventConsumer
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
+import io.jrb.labs.weatherradio.features.reporting.cache.ReportingCache
+import java.time.Clock
+import java.time.Instant
 
-sealed class PipelineEvent : Event {
+class WeatherReportUpdatedConsumer(
+    eventBus: PipelineEventBus,
+    systemEventBus: SystemEventBus,
+    private val reportingCache: ReportingCache,
+    private val clock: Clock
+) : AbstractPipelineEventConsumer<PipelineEvent.WeatherReportUpdated>(
+    PipelineEvent.WeatherReportUpdated::class,
+    eventBus,
+    systemEventBus
+) {
 
-    data class AudioSegmentDetected(
-        val stationId: String,
-        val segmentId: String,
-        val audioPath: String
-    ) : PipelineEvent()
-
-    data class SameMessageDecoded(
-        val stationId: String,
-        val same: SameMessage
-    ) : PipelineEvent()
-
-    data class TranscriptProduced(
-        val stationId: String,
-        val transcript: TranscriptSegment
-    ) : PipelineEvent()
-
-    data class RadioStatusUpdated(
-        val status: RadioSignalStatus
-    ) : PipelineEvent()
-
-    data class WeatherReportUpdated(
-        val report: WeatherReport
-    ) : PipelineEvent()
+    override suspend fun handleEvent(event: PipelineEvent.WeatherReportUpdated) {
+        reportingCache.updateWeatherReport(
+            report = event.report,
+            receivedAt = Instant.now(clock)
+        )
+    }
 
 }

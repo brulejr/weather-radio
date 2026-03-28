@@ -25,40 +25,37 @@
 package io.jrb.labs.weatherradio.features.reporting.service
 
 import io.jrb.labs.weatherradio.domain.WeatherReport
-import io.jrb.labs.weatherradio.features.fusion.service.WeatherFusionService
-import io.jrb.labs.weatherradio.features.radio.service.RadioService
-import io.jrb.labs.weatherradio.features.same.service.SameService
-import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
+import io.jrb.labs.weatherradio.features.reporting.ReportingDatafill
+import io.jrb.labs.weatherradio.features.reporting.cache.ReportingCache
+import io.jrb.labs.weatherradio.features.reporting.cache.ReportingFreshness
 import java.time.Clock
 import java.time.Instant
 
-class WeatherReportQueryService(
-    private val radioService: RadioService,
-    private val sameService: SameService,
-    private val transcriptionService: TranscriptionService,
-    private val fusionService: WeatherFusionService,
+class WeatherReportingService(
+    private val datafill: ReportingDatafill,
+    private val reportingCache: ReportingCache,
     private val clock: Clock
-) : WeatherReportService {
+) {
 
-    override fun currentReport(): WeatherReport {
-        val radioStatus = radioService.radioStatus()
-        val sameMessage = sameService.latestSameMessage()
-        val latestTranscript = transcriptionService.latestTranscript()
+    fun currentReport(): WeatherReport {
+        val now = Instant.now(clock)
+        val cached = reportingCache.currentWeatherReport()
 
-        val alerts = buildList {
-            if (sameMessage != null) {
-                add(fusionService.toAlert(sameMessage))
-            }
+        return when {
+            cached != null && ReportingFreshness.isFresh(cached, now, datafill.weatherReportTtl) ->
+                cached.value.copy(generatedAt = now)
+
+            else ->
+                WeatherReport(
+                    regionName = "Unknown Region",
+                    generatedAt = now,
+                    radioStatus = null,
+                    authoritativeAlerts = emptyList(),
+                    transcribedForecast = null,
+                    latestTranscript = null,
+                    station = null
+                )
         }
-
-        return WeatherReport(
-            regionName = radioStatus?.station?.regionName ?: "Unknown Region",
-            generatedAt = Instant.now(clock),
-            radioStatus = radioStatus,
-            authoritativeAlerts = alerts,
-            transcribedForecast = latestTranscript?.text,
-            latestTranscript = latestTranscript,
-            station = radioStatus?.station
-        )
     }
+
 }

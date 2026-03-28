@@ -22,38 +22,20 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.reporting.cache
 
-import io.jrb.labs.commons.eventbus.Event
-import io.jrb.labs.weatherradio.domain.RadioSignalStatus
-import io.jrb.labs.weatherradio.domain.SameMessage
-import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherReport
+import java.time.Instant
+import java.util.concurrent.atomic.AtomicReference
 
-sealed class PipelineEvent : Event {
+class ReportingCache {
 
-    data class AudioSegmentDetected(
-        val stationId: String,
-        val segmentId: String,
-        val audioPath: String
-    ) : PipelineEvent()
+    private val weatherReportRef = AtomicReference<TimedValue<WeatherReport>?>(null)
 
-    data class SameMessageDecoded(
-        val stationId: String,
-        val same: SameMessage
-    ) : PipelineEvent()
+    fun currentWeatherReport(): TimedValue<WeatherReport>? = weatherReportRef.get()
 
-    data class TranscriptProduced(
-        val stationId: String,
-        val transcript: TranscriptSegment
-    ) : PipelineEvent()
-
-    data class RadioStatusUpdated(
-        val status: RadioSignalStatus
-    ) : PipelineEvent()
-
-    data class WeatherReportUpdated(
-        val report: WeatherReport
-    ) : PipelineEvent()
+    fun updateWeatherReport(report: WeatherReport, receivedAt: Instant) {
+        weatherReportRef.set(TimedValue(report, receivedAt))
+    }
 
 }

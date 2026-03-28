@@ -26,8 +26,10 @@ package io.jrb.labs.weatherradio.features.reporting
 
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_REPORTING
 import org.springframework.boot.context.properties.ConfigurationProperties
+import java.time.Duration
 
 @ConfigurationProperties(prefix = CONFIG_PREFIX_REPORTING)
 data class ReportingDatafill(
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val weatherReportTtl: Duration = Duration.ofMinutes(10)
 )

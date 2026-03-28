@@ -22,38 +22,11 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.reporting.cache
 
-import io.jrb.labs.commons.eventbus.Event
-import io.jrb.labs.weatherradio.domain.RadioSignalStatus
-import io.jrb.labs.weatherradio.domain.SameMessage
-import io.jrb.labs.weatherradio.domain.TranscriptSegment
-import io.jrb.labs.weatherradio.domain.WeatherReport
+import java.time.Instant
 
-sealed class PipelineEvent : Event {
-
-    data class AudioSegmentDetected(
-        val stationId: String,
-        val segmentId: String,
-        val audioPath: String
-    ) : PipelineEvent()
-
-    data class SameMessageDecoded(
-        val stationId: String,
-        val same: SameMessage
-    ) : PipelineEvent()
-
-    data class TranscriptProduced(
-        val stationId: String,
-        val transcript: TranscriptSegment
-    ) : PipelineEvent()
-
-    data class RadioStatusUpdated(
-        val status: RadioSignalStatus
-    ) : PipelineEvent()
-
-    data class WeatherReportUpdated(
-        val report: WeatherReport
-    ) : PipelineEvent()
-
-}
+data class TimedValue<T>(
+    val value: T,
+    val receivedAt: Instant
+)

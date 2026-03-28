@@ -1,11 +1,40 @@
 package io.jrb.labs.weatherradio.features.fusion.service
 
 import io.jrb.labs.weatherradio.domain.AlertSeverity
+import io.jrb.labs.weatherradio.domain.RadioSignalStatus
 import io.jrb.labs.weatherradio.domain.SameEventType
 import io.jrb.labs.weatherradio.domain.SameMessage
+import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherAlert
+import io.jrb.labs.weatherradio.domain.WeatherReport
+import java.time.Clock
+import java.time.Instant
 
-class WeatherFusionService {
+class WeatherFusionService(
+    private val clock: Clock
+) {
+
+    fun toWeatherReport(
+        radioStatus: RadioSignalStatus?,
+        sameMessage: SameMessage?,
+        transcript: TranscriptSegment?
+    ): WeatherReport {
+        val alerts = buildList {
+            if (sameMessage != null) {
+                add(toAlert(sameMessage))
+            }
+        }
+
+        return WeatherReport(
+            regionName = radioStatus?.station?.regionName ?: "Unknown Region",
+            generatedAt = Instant.now(clock),
+            radioStatus = radioStatus,
+            authoritativeAlerts = alerts,
+            transcribedForecast = transcript?.text,
+            latestTranscript = transcript,
+            station = radioStatus?.station
+        )
+    }
 
     fun toAlert(message: SameMessage): WeatherAlert {
         return WeatherAlert(

@@ -22,10 +22,14 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.reporting.service
+package io.jrb.labs.weatherradio.features.fusion.repository
 
-import io.jrb.labs.weatherradio.domain.WeatherReport
+import io.jrb.labs.weatherradio.domain.RadioSignalStatus
+import io.jrb.labs.weatherradio.domain.SameMessage
+import io.jrb.labs.weatherradio.domain.TranscriptSegment
 
-interface WeatherReportService {
-    fun currentReport(): WeatherReport
-}
+data class FusionProjection(
+    val radioStatus: RadioSignalStatus? = null,
+    val sameMessage: SameMessage? = null,
+    val transcript: TranscriptSegment? = null
+)

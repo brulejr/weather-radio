@@ -22,38 +22,16 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.fusion.messaging
 
-import io.jrb.labs.commons.eventbus.Event
-import io.jrb.labs.weatherradio.domain.RadioSignalStatus
-import io.jrb.labs.weatherradio.domain.SameMessage
-import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherReport
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 
-sealed class PipelineEvent : Event {
-
-    data class AudioSegmentDetected(
-        val stationId: String,
-        val segmentId: String,
-        val audioPath: String
-    ) : PipelineEvent()
-
-    data class SameMessageDecoded(
-        val stationId: String,
-        val same: SameMessage
-    ) : PipelineEvent()
-
-    data class TranscriptProduced(
-        val stationId: String,
-        val transcript: TranscriptSegment
-    ) : PipelineEvent()
-
-    data class RadioStatusUpdated(
-        val status: RadioSignalStatus
-    ) : PipelineEvent()
-
-    data class WeatherReportUpdated(
-        val report: WeatherReport
-    ) : PipelineEvent()
-
+class WeatherReportPublisher(
+    private val eventBus: PipelineEventBus
+) {
+    fun send(report: WeatherReport) {
+        eventBus.send(PipelineEvent.WeatherReportUpdated(report))
+    }
 }

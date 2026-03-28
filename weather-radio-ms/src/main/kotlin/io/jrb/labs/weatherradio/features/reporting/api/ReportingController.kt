@@ -26,7 +26,7 @@ package io.jrb.labs.weatherradio.features.reporting.api
 
 import io.jrb.labs.weatherradio.domain.WeatherReport
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_REPORTING
-import io.jrb.labs.weatherradio.features.reporting.service.WeatherReportService
+import io.jrb.labs.weatherradio.features.reporting.service.WeatherReportingService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -36,10 +36,10 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/weather/report")
 @ConditionalOnProperty(prefix = CONFIG_PREFIX_REPORTING, name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class ReportingController(
-    private val weatherReportService: WeatherReportService
+    private val weatherReportingService: WeatherReportingService
 ) {
 
     @GetMapping
-    fun report(): WeatherReport = weatherReportService.currentReport()
+    fun report(): WeatherReport = weatherReportingService.currentReport()
 
 }

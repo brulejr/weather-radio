@@ -24,12 +24,20 @@
 
 package io.jrb.labs.weatherradio.features.fusion
 
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_FUSION
+import io.jrb.labs.weatherradio.features.fusion.messaging.RadioStatusUpdatedFusionConsumer
+import io.jrb.labs.weatherradio.features.fusion.messaging.SameMessageDecodedFusionConsumer
+import io.jrb.labs.weatherradio.features.fusion.messaging.TranscriptProducedFusionConsumer
+import io.jrb.labs.weatherradio.features.fusion.messaging.WeatherReportPublisher
+import io.jrb.labs.weatherradio.features.fusion.repository.FusionProjectionRepository
 import io.jrb.labs.weatherradio.features.fusion.service.WeatherFusionService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.Clock
 
 @Configuration
 @ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.fusion"])
@@ -37,7 +45,58 @@ import org.springframework.context.annotation.Configuration
 class FusionConfiguration {
 
     @Bean
-    fun fusionService() = WeatherFusionService()
+    fun radioStatusUpdatedFusionConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        projectionRepository: FusionProjectionRepository,
+        fusionService: WeatherFusionService,
+        weatherReportPublisher: WeatherReportPublisher
+    ) = RadioStatusUpdatedFusionConsumer(
+        eventBus,
+        systemEventBus,
+        projectionRepository,
+        fusionService,
+        weatherReportPublisher
+    )
+
+    @Bean
+    fun sameMessageDecodedFusionConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        projectionRepository: FusionProjectionRepository,
+        fusionService: WeatherFusionService,
+        weatherReportPublisher: WeatherReportPublisher
+    ) = SameMessageDecodedFusionConsumer(
+        eventBus,
+        systemEventBus,
+        projectionRepository,
+        fusionService,
+        weatherReportPublisher
+    )
+
+    @Bean
+    fun transcriptProducedFusionConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        projectionRepository: FusionProjectionRepository,
+        fusionService: WeatherFusionService,
+        weatherReportPublisher: WeatherReportPublisher
+    ) = TranscriptProducedFusionConsumer(
+        eventBus,
+        systemEventBus,
+        projectionRepository,
+        fusionService,
+        weatherReportPublisher
+    )
+
+    @Bean
+    fun weatherReportPublisher(eventBus: PipelineEventBus) = WeatherReportPublisher(eventBus)
+
+    @Bean
+    fun fusionProjectionRepository() = FusionProjectionRepository()
+
+    @Bean
+    fun fusionService(clock: Clock) = WeatherFusionService(clock)
 
     @Bean
     fun fusionInfoContributor(datafill: FusionDatafill) = FusionInfoContributor(datafill)

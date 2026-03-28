@@ -22,38 +22,26 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.fusion.repository
 
-import io.jrb.labs.commons.eventbus.Event
 import io.jrb.labs.weatherradio.domain.RadioSignalStatus
 import io.jrb.labs.weatherradio.domain.SameMessage
 import io.jrb.labs.weatherradio.domain.TranscriptSegment
-import io.jrb.labs.weatherradio.domain.WeatherReport
+import java.util.concurrent.atomic.AtomicReference
 
-sealed class PipelineEvent : Event {
+class FusionProjectionRepository {
 
-    data class AudioSegmentDetected(
-        val stationId: String,
-        val segmentId: String,
-        val audioPath: String
-    ) : PipelineEvent()
+    private val ref = AtomicReference(FusionProjection())
 
-    data class SameMessageDecoded(
-        val stationId: String,
-        val same: SameMessage
-    ) : PipelineEvent()
+    fun current(): FusionProjection = ref.get()
 
-    data class TranscriptProduced(
-        val stationId: String,
-        val transcript: TranscriptSegment
-    ) : PipelineEvent()
+    fun updateRadioStatus(status: RadioSignalStatus): FusionProjection =
+        ref.updateAndGet { it.copy(radioStatus = status) }
 
-    data class RadioStatusUpdated(
-        val status: RadioSignalStatus
-    ) : PipelineEvent()
+    fun updateSameMessage(message: SameMessage): FusionProjection =
+        ref.updateAndGet { it.copy(sameMessage = message) }
 
-    data class WeatherReportUpdated(
-        val report: WeatherReport
-    ) : PipelineEvent()
+    fun updateTranscript(segment: TranscriptSegment): FusionProjection =
+        ref.updateAndGet { it.copy(transcript = segment) }
 
 }

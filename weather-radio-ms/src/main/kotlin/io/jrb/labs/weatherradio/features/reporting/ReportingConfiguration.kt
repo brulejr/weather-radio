@@ -24,13 +24,12 @@
 
 package io.jrb.labs.weatherradio.features.reporting
 
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_REPORTING
-import io.jrb.labs.weatherradio.features.fusion.service.WeatherFusionService
-import io.jrb.labs.weatherradio.features.radio.service.RadioService
-import io.jrb.labs.weatherradio.features.reporting.service.WeatherReportQueryService
-import io.jrb.labs.weatherradio.features.reporting.service.WeatherReportService
-import io.jrb.labs.weatherradio.features.same.service.SameService
-import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
+import io.jrb.labs.weatherradio.features.reporting.messaging.WeatherReportUpdatedConsumer
+import io.jrb.labs.weatherradio.features.reporting.cache.ReportingCache
+import io.jrb.labs.weatherradio.features.reporting.service.WeatherReportingService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
@@ -43,15 +42,24 @@ import java.time.Clock
 class ReportingConfiguration {
 
     @Bean
+    fun weatherReportUpdatedConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        reportingCache: ReportingCache,
+        clock: Clock
+    ) = WeatherReportUpdatedConsumer(eventBus, systemEventBus, reportingCache, clock)
+
+    @Bean
+    fun reportingCache() = ReportingCache()
+
+    @Bean
     fun reportingInfoContributor(datafill: ReportingDatafill) = ReportingInfoContributor(datafill)
 
     @Bean
     fun reportingService(
-        radioService: RadioService,
-        sameService: SameService,
-        transcriptionService: TranscriptionService,
-        fusionService: WeatherFusionService,
+        datafill: ReportingDatafill,
+        reportingCache: ReportingCache,
         clock: Clock
-    ): WeatherReportService = WeatherReportQueryService(radioService, sameService, transcriptionService, fusionService, clock)
+    ): WeatherReportingService = WeatherReportingService(datafill, reportingCache, clock)
 
 }

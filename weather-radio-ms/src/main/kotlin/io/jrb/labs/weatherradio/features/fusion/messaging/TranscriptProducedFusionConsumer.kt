@@ -45,7 +45,7 @@ class TranscriptProducedFusionConsumer(
 
     override suspend fun handleEvent(event: PipelineEvent.TranscriptProduced) {
         val projection = projectionRepository.updateTranscript(event.transcript)
-        weatherReportPublisher.send(
+        weatherReportPublisher.publish(
             fusionService.toWeatherReport(
                 radioStatus = projection.radioStatus,
                 sameMessage = projection.sameMessage,

@@ -45,7 +45,7 @@ class RadioStatusUpdatedFusionConsumer(
 
     override suspend fun handleEvent(event: PipelineEvent.RadioStatusUpdated) {
         val projection = projectionRepository.updateRadioStatus(event.status)
-        weatherReportPublisher.send(
+        weatherReportPublisher.publish(
             fusionService.toWeatherReport(
                 radioStatus = projection.radioStatus,
                 sameMessage = projection.sameMessage,

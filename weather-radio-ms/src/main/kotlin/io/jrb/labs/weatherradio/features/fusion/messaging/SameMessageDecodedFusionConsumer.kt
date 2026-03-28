@@ -45,7 +45,7 @@ class SameMessageDecodedFusionConsumer(
 
     override suspend fun handleEvent(event: PipelineEvent.SameMessageDecoded) {
         val projection = projectionRepository.updateSameMessage(event.same)
-        weatherReportPublisher.send(
+        weatherReportPublisher.publish(
             fusionService.toWeatherReport(
                 radioStatus = projection.radioStatus,
                 sameMessage = projection.sameMessage,

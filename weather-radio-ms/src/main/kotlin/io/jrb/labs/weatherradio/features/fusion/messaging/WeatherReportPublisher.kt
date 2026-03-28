@@ -31,7 +31,7 @@ import io.jrb.labs.weatherradio.events.PipelineEventBus
 class WeatherReportPublisher(
     private val eventBus: PipelineEventBus
 ) {
-    fun send(report: WeatherReport) {
-        eventBus.send(PipelineEvent.WeatherReportUpdated(report))
+    suspend fun publish(report: WeatherReport) {
+        eventBus.publish(PipelineEvent.WeatherReportUpdated(report))
     }
 }

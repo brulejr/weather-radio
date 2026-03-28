@@ -83,10 +83,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    testImplementation(libs.awaitility)
 }
 
 kotlin {
@@ -96,3 +93,11 @@ kotlin {
     }
 }
 
+springBoot {
+    // info.app.version will now be aligned with tag-derived project.version
+    buildInfo()
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}

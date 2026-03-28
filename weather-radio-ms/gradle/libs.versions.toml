@@ -1,0 +1,5 @@
+[versions]
+awaitility = "4.3.0"
+
+[libraries]
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }

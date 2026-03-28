@@ -23,7 +23,7 @@ info:
     description: RTL433 data processing pipeline for rtl_433 MQTT events
     profile: ${spring.profiles.active}
 
-weather-radio:
+application.ingestion:
   station-name: "NOAA Weather Radio Burlington"
   station-call-sign: "KIG60"
   region-name: "South Burlington, VT"

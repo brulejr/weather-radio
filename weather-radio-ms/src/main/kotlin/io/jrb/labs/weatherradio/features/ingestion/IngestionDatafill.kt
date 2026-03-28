@@ -29,5 +29,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = CONFIG_PREFIX_INGESTION)
 data class IngestionDatafill(
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val stationName: String = "NOAA Weather Radio",
+    val stationCallSign: String = "KIG60",
+    val regionName: String = "South Burlington, VT",
+    val frequencyMHz: Double = 162.4
 )

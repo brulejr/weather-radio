@@ -26,7 +26,6 @@ package io.jrb.labs.weatherradio.features.ingestion.service
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
-import io.jrb.labs.weatherradio.config.WeatherRadioProperties
 import io.jrb.labs.weatherradio.domain.RadioSignalStatus
 import io.jrb.labs.weatherradio.domain.SameEventType
 import io.jrb.labs.weatherradio.domain.SameMessage
@@ -34,13 +33,14 @@ import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherStation
 import io.jrb.labs.weatherradio.events.PipelineEvent
 import io.jrb.labs.weatherradio.events.PipelineEventBus
+import io.jrb.labs.weatherradio.features.ingestion.IngestionDatafill
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import java.time.Clock
 import java.time.Instant
 
 class StubIngestionInitializer(
-    private val properties: WeatherRadioProperties,
+    private val datafill: IngestionDatafill,
     private val eventBus: PipelineEventBus,
     private val clock: Clock,
     systemEventBus: SystemEventBus
@@ -51,10 +51,10 @@ class StubIngestionInitializer(
         val now = Instant.now(clock)
 
         val station = WeatherStation(
-            callSign = properties.stationCallSign,
-            frequencyMHz = properties.frequencyMHz,
-            name = properties.stationName,
-            regionName = properties.regionName
+            callSign = datafill.stationCallSign,
+            frequencyMHz = datafill.frequencyMHz,
+            name = datafill.stationName,
+            regionName = datafill.regionName
         )
 
         publishRadioStatus(now, station)
@@ -79,7 +79,7 @@ class StubIngestionInitializer(
     private fun publishSame(now: Instant) {
         eventBus.send(
             PipelineEvent.SameMessageDecoded(
-                stationId = properties.stationCallSign,
+                stationId = datafill.stationCallSign,
                 same = SameMessage(
                     rawHeader = "ZCZC-WXR-TOR-050007,086183+0030-086183-KIG60/NWS-",
                     originator = "WXR",
@@ -87,7 +87,7 @@ class StubIngestionInitializer(
                     fipsCodes = listOf("050007", "086183"),
                     purgeDurationMinutes = 30,
                     issuedAt = now,
-                    stationCallSign = properties.stationCallSign,
+                    stationCallSign = datafill.stationCallSign,
                     receivedAt = now
                 )
             )
@@ -97,7 +97,7 @@ class StubIngestionInitializer(
     private fun publishTranscript(now: Instant) {
         eventBus.send(
             PipelineEvent.TranscriptProduced(
-                stationId = properties.stationCallSign,
+                stationId = datafill.stationCallSign,
                 transcript = TranscriptSegment(
                     text = "National Weather Service Burlington Vermont. Tornado warning in effect until 4:30 PM.",
                     startedAt = now.minusSeconds(20),

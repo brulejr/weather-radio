@@ -25,7 +25,6 @@
 package io.jrb.labs.weatherradio.features.ingestion
 
 import io.jrb.labs.commons.eventbus.SystemEventBus
-import io.jrb.labs.weatherradio.config.WeatherRadioProperties
 import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
 import io.jrb.labs.weatherradio.features.ingestion.service.StubIngestionInitializer
@@ -42,11 +41,11 @@ class IngestionConfiguration {
 
     @Bean
     fun stubIngestionInitializer(
-        properties: WeatherRadioProperties,
+        datafill: IngestionDatafill,
         eventBus: PipelineEventBus,
         clock: Clock,
         systemEventBus: SystemEventBus
-    ) = StubIngestionInitializer(properties, eventBus, clock, systemEventBus)
+    ) = StubIngestionInitializer(datafill, eventBus, clock, systemEventBus)
 
     @Bean
     fun ingestionInfoContributor(datafill: IngestionDatafill) = IngestionInfoContributor(datafill)

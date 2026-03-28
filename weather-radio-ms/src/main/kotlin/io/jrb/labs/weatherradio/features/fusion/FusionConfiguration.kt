@@ -22,21 +22,24 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.fusion
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_FUSION
+import io.jrb.labs.weatherradio.features.fusion.service.WeatherFusionService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+@Configuration
+@ConfigurationPropertiesScan( basePackages = ["io.jrb.labs.weatherradio.features.fusion"])
+@ConditionalOnProperty(prefix = CONFIG_PREFIX_FUSION, name = ["enabled"], havingValue = "true", matchIfMissing = true)
+class FusionConfiguration {
+
+    @Bean
+    fun fusionService() = WeatherFusionService()
+
+    @Bean
+    fun fusionInfoContributor(datafill: FusionDatafill) = FusionInfoContributor(datafill)
+
 }

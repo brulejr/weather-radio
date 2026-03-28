@@ -22,21 +22,18 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.transcription
 
-import java.time.Instant
+import io.jrb.labs.commons.actuator.FeatureInfoContributor
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.TRANSCRIPTION
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
-) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+class TranscriptionInfoContributor(
+    private val datafill: TranscriptionDatafill
+) : FeatureInfoContributor {
+
+    override val key: String = TRANSCRIPTION.featureId
+
+    override fun info(): Map<String, Any?> = mapOf(
+        "enabled" to datafill.enabled
+    )
 }

@@ -1,12 +1,10 @@
-package io.jrb.labs.weatherradio.service
+package io.jrb.labs.weatherradio.features.fusion.service
 
 import io.jrb.labs.weatherradio.domain.AlertSeverity
 import io.jrb.labs.weatherradio.domain.SameEventType
 import io.jrb.labs.weatherradio.domain.SameMessage
 import io.jrb.labs.weatherradio.domain.WeatherAlert
-import org.springframework.stereotype.Service
 
-@Service
 class WeatherFusionService {
 
     fun toAlert(message: SameMessage): WeatherAlert {

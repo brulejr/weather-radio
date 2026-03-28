@@ -22,21 +22,26 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.transcription.messaging
 
-import java.time.Instant
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.AbstractPipelineEventConsumer
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
+import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionService
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
+class TranscriptProducedConsumer(
+    eventBus: PipelineEventBus,
+    systemEventBus: SystemEventBus,
+    private val transcriptionService: TranscriptionService
+) : AbstractPipelineEventConsumer<PipelineEvent.TranscriptProduced>(
+    PipelineEvent.TranscriptProduced::class,
+    eventBus,
+    systemEventBus
 ) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
+
+    override suspend fun handleEvent(event: PipelineEvent.TranscriptProduced) {
+        transcriptionService.updateTranscript(event.transcript)
     }
+
 }

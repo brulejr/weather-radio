@@ -22,21 +22,24 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.domain
+package io.jrb.labs.weatherradio.features.same.api
 
-import java.time.Instant
+import io.jrb.labs.weatherradio.domain.SameMessage
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME
+import io.jrb.labs.weatherradio.features.same.service.SameService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-data class WeatherAlert(
-    val eventCode: SameEventType,
-    val headline: String,
-    val severity: AlertSeverity,
-    val affectedFipsCodes: List<String>,
-    val issuedAt: Instant?,
-    val expiresAt: Instant?,
-    val source: AlertSource
+@RestController
+@RequestMapping("/api/weather/radio/latest-same")
+@ConditionalOnProperty(prefix = CONFIG_PREFIX_SAME, name = ["enabled"], havingValue = "true", matchIfMissing = true)
+class SameController(
+    private val sameService: SameService
 ) {
-    enum class AlertSource {
-        SAME,
-        TRANSCRIPT
-    }
+
+    @GetMapping
+    fun latestSame(): SameMessage? = sameService.latestSameMessage()
+
 }

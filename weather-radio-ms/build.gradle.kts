@@ -70,6 +70,7 @@ dependencies {
     } else {
         implementation(platform("io.jrb.labs:ksb-dependency-bom:$ksbCommonsVersion"))
     }
+    implementation("io.jrb.labs:ksb-commons-ms-core")
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")

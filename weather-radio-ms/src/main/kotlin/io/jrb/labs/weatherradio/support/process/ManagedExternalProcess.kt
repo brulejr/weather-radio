@@ -22,25 +22,29 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.ingestion
+package io.jrb.labs.weatherradio.support.process
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
-import org.springframework.boot.context.properties.ConfigurationProperties
-import java.nio.file.Path
-import java.time.Duration
+import java.io.InputStream
+import java.util.concurrent.atomic.AtomicReference
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_INGESTION)
-data class IngestionDatafill(
-    val enabled: Boolean = true,
-    val mode: String = "stub",                  // stub | tcp | process
-    val stationName: String = "NOAA Weather Radio",
-    val stationCallSign: String = "KIG60",
-    val regionName: String = "South Burlington, VT",
-    val frequencyMHz: Double = 162.4,
-    val tcpHost: String = "127.0.0.1",
-    val tcpPort: Int = 7355,
-    val sampleRateHz: Int = 22050,
-    val segmentDuration: Duration = Duration.ofSeconds(20),
-    val outputDir: Path = Path.of("./var/weather-radio/audio"),
-    val reconnectDelay: Duration = Duration.ofSeconds(5)
-)
+class ManagedExternalProcess(
+    private val command: List<String>
+) {
+    private val processRef = AtomicReference<Process?>()
+
+    fun start(): InputStream {
+        val process = ProcessBuilder(command)
+            .redirectErrorStream(true)
+            .start()
+
+        processRef.set(process)
+        return process.inputStream
+    }
+
+    fun stop() {
+        processRef.getAndSet(null)?.destroy()
+    }
+
+    fun isRunning(): Boolean =
+        processRef.get()?.isAlive == true
+}

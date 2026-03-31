@@ -24,7 +24,15 @@ info:
     profile: ${spring.profiles.active}
 
 application.ingestion:
-  station-name: "NOAA Weather Radio Burlington"
-  station-call-sign: "KIG60"
-  region-name: "South Burlington, VT"
-  frequency-mhz: 162.4
+  enabled: true
+  mode: tcp
+  station-name: NOAA Weather Radio Burlington
+  station-call-sign: KIG60
+  region-name: South Burlington, VT
+  frequency-mhz: 162.425
+  tcp-host: rtlsdr01.brulenet.dev
+  tcp-port: 7355
+  sample-rate-hz: 22050
+  segment-duration: 20s
+  output-dir: ./var/weather-radio/audio
+  reconnect-delay: 5s

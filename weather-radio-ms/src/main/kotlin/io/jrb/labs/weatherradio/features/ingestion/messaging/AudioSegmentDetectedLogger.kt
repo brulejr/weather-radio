@@ -22,25 +22,32 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.ingestion
+package io.jrb.labs.weatherradio.features.ingestion.messaging
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
-import org.springframework.boot.context.properties.ConfigurationProperties
-import java.nio.file.Path
-import java.time.Duration
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.AbstractPipelineEventConsumer
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
+import org.slf4j.LoggerFactory
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_INGESTION)
-data class IngestionDatafill(
-    val enabled: Boolean = true,
-    val mode: String = "stub",                  // stub | tcp | process
-    val stationName: String = "NOAA Weather Radio",
-    val stationCallSign: String = "KIG60",
-    val regionName: String = "South Burlington, VT",
-    val frequencyMHz: Double = 162.4,
-    val tcpHost: String = "127.0.0.1",
-    val tcpPort: Int = 7355,
-    val sampleRateHz: Int = 22050,
-    val segmentDuration: Duration = Duration.ofSeconds(20),
-    val outputDir: Path = Path.of("./var/weather-radio/audio"),
-    val reconnectDelay: Duration = Duration.ofSeconds(5)
-)
+class AudioSegmentDetectedLogger(
+    eventBus: PipelineEventBus,
+    systemEventBus: SystemEventBus
+) : AbstractPipelineEventConsumer<PipelineEvent.AudioSegmentDetected>(
+    PipelineEvent.AudioSegmentDetected::class,
+    eventBus,
+    systemEventBus
+) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    override suspend fun handleEvent(event: PipelineEvent.AudioSegmentDetected) {
+        logger.info(
+            "Audio segment detected: stationId={}, segmentId={}, audioPath={}",
+            event.stationId,
+            event.segmentId,
+            event.audioPath
+        )
+    }
+
+}

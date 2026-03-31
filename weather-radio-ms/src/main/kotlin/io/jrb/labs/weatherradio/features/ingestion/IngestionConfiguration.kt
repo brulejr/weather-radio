@@ -27,6 +27,10 @@ package io.jrb.labs.weatherradio.features.ingestion
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
+import io.jrb.labs.weatherradio.features.ingestion.messaging.AudioSegmentDetectedLogger
+import io.jrb.labs.weatherradio.features.ingestion.messaging.AudioSegmentPublisher
+import io.jrb.labs.weatherradio.features.ingestion.service.RadioReceiverFactory
+import io.jrb.labs.weatherradio.features.ingestion.service.SdrCaptureService
 import io.jrb.labs.weatherradio.features.ingestion.service.StubIngestionInitializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -46,6 +50,28 @@ class IngestionConfiguration {
         clock: Clock,
         systemEventBus: SystemEventBus
     ) = StubIngestionInitializer(datafill, eventBus, clock, systemEventBus)
+
+    @Bean
+    fun radioReceiverFactory() = RadioReceiverFactory()
+
+    @Bean
+    fun sdrCaptureService(
+        datafill: IngestionDatafill,
+        clock: Clock,
+        eventBus: PipelineEventBus,
+        audioSegmentPublisher: AudioSegmentPublisher,
+        radioReceiverFactory: RadioReceiverFactory,
+        systemEventBus: SystemEventBus
+    ) = SdrCaptureService(datafill, clock, eventBus, audioSegmentPublisher, radioReceiverFactory, systemEventBus)
+
+    @Bean
+    fun audioSegmentPublisher(eventBus: PipelineEventBus) = AudioSegmentPublisher(eventBus)
+
+    @Bean
+    fun audioSegmentDetectedLogger(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus
+    ) = AudioSegmentDetectedLogger(eventBus, systemEventBus)
 
     @Bean
     fun ingestionInfoContributor(datafill: IngestionDatafill) = IngestionInfoContributor(datafill)

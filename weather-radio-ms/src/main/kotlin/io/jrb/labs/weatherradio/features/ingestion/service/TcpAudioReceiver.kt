@@ -22,25 +22,30 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.ingestion
+package io.jrb.labs.weatherradio.features.ingestion.service
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
-import org.springframework.boot.context.properties.ConfigurationProperties
-import java.nio.file.Path
-import java.time.Duration
+import java.io.InputStream
+import java.net.Socket
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_INGESTION)
-data class IngestionDatafill(
-    val enabled: Boolean = true,
-    val mode: String = "stub",                  // stub | tcp | process
-    val stationName: String = "NOAA Weather Radio",
-    val stationCallSign: String = "KIG60",
-    val regionName: String = "South Burlington, VT",
-    val frequencyMHz: Double = 162.4,
-    val tcpHost: String = "127.0.0.1",
-    val tcpPort: Int = 7355,
-    val sampleRateHz: Int = 22050,
-    val segmentDuration: Duration = Duration.ofSeconds(20),
-    val outputDir: Path = Path.of("./var/weather-radio/audio"),
-    val reconnectDelay: Duration = Duration.ofSeconds(5)
-)
+class TcpAudioReceiver(
+    private val host: String,
+    private val port: Int
+) : RadioReceiver {
+
+    private var socket: Socket? = null
+
+    override fun start(): InputStream {
+        val s = Socket(host, port)
+        socket = s
+        return s.getInputStream()
+    }
+
+    override fun stop() {
+        socket?.close()
+        socket = null
+    }
+
+    override fun isRunning(): Boolean =
+        socket?.isConnected == true && socket?.isClosed == false
+
+}

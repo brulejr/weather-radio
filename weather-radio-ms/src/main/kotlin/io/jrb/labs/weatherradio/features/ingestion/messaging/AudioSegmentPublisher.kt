@@ -22,25 +22,22 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.ingestion
+package io.jrb.labs.weatherradio.features.ingestion.messaging
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_INGESTION
-import org.springframework.boot.context.properties.ConfigurationProperties
-import java.nio.file.Path
-import java.time.Duration
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
+import io.jrb.labs.weatherradio.features.ingestion.model.AudioSegment
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_INGESTION)
-data class IngestionDatafill(
-    val enabled: Boolean = true,
-    val mode: String = "stub",                  // stub | tcp | process
-    val stationName: String = "NOAA Weather Radio",
-    val stationCallSign: String = "KIG60",
-    val regionName: String = "South Burlington, VT",
-    val frequencyMHz: Double = 162.4,
-    val tcpHost: String = "127.0.0.1",
-    val tcpPort: Int = 7355,
-    val sampleRateHz: Int = 22050,
-    val segmentDuration: Duration = Duration.ofSeconds(20),
-    val outputDir: Path = Path.of("./var/weather-radio/audio"),
-    val reconnectDelay: Duration = Duration.ofSeconds(5)
-)
+class AudioSegmentPublisher(
+    private val eventBus: PipelineEventBus
+) {
+    suspend fun publish(segment: AudioSegment) {
+        eventBus.publish(
+            PipelineEvent.AudioSegmentDetected(
+                stationId = segment.stationId,
+                segmentId = segment.segmentId,
+                audioPath = segment.audioFile.toString()
+            )
+        )
+    }
+}

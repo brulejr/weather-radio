@@ -1,0 +1,42 @@
+services:
+  rtl_fm_edge:
+    build:
+      context: .
+      dockerfile: docker/rtl-fm-edge/Dockerfile
+    container_name: rtl_fm_edge
+    restart: unless-stopped
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+    ports:
+      - "${AUDIO_TCP_PORT:-7355}:7355"
+    environment:
+      RTL_FM_DEVICE_INDEX: "${RTL_FM_DEVICE_INDEX:-0}"
+      RTL_FM_FREQUENCY: "${RTL_FM_FREQUENCY:-162.400M}"
+      RTL_FM_MODE: "${RTL_FM_MODE:-fm}"
+      RTL_FM_SAMPLE_RATE: "${RTL_FM_SAMPLE_RATE:-22050}"
+      RTL_FM_RESAMPLE_RATE: "${RTL_FM_RESAMPLE_RATE:-22050}"
+      AUDIO_TCP_PORT: "7355"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 7355 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    command: --cleanup --interval 300 rtl_fm_edge
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

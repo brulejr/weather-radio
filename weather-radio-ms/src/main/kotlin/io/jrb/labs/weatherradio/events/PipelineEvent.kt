@@ -29,6 +29,7 @@ import io.jrb.labs.weatherradio.domain.RadioSignalStatus
 import io.jrb.labs.weatherradio.domain.SameMessage
 import io.jrb.labs.weatherradio.domain.TranscriptSegment
 import io.jrb.labs.weatherradio.domain.WeatherReport
+import io.jrb.labs.weatherradio.features.ingestion.model.AudioSegment
 
 sealed class PipelineEvent : Event {
 
@@ -36,6 +37,16 @@ sealed class PipelineEvent : Event {
         val stationId: String,
         val segmentId: String,
         val audioPath: String
+    ) : PipelineEvent()
+
+    data class AudioSegmentAnalyzed(
+        val stationId: String,
+        val segmentId: String,
+        val audioPath: String,
+        val contentHint: AudioSegment.ContentHint,
+        val rmsLevel: Double,
+        val peakLevel: Int,
+        val zeroCrossingRate: Double
     ) : PipelineEvent()
 
     data class SameMessageDecoded(

@@ -36,3 +36,10 @@ application.ingestion:
   segment-duration: 20s
   output-dir: ./var/weather-radio/audio
   reconnect-delay: 5s
+
+application.analysis:
+  enabled: true
+  low-rms-threshold: 600.0
+  voice-rms-threshold: 1800.0
+  tone-zero-crossing-threshold: 0.20
+  same-zero-crossing-threshold: 0.14

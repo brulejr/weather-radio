@@ -27,9 +27,11 @@ package io.jrb.labs.weatherradio.features.same
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.PipelineEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME
+import io.jrb.labs.weatherradio.features.same.messaging.AudioSegmentAnalyzedSameConsumer
 import io.jrb.labs.weatherradio.features.same.messaging.SameMessageDecodedConsumer
 import io.jrb.labs.weatherradio.features.same.repository.InMemorySameRepository
 import io.jrb.labs.weatherradio.features.same.repository.SameRepository
+import io.jrb.labs.weatherradio.features.same.service.SameCandidateDetector
 import io.jrb.labs.weatherradio.features.same.service.SameService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -47,6 +49,16 @@ class SameConfiguration {
         systemEventBus: SystemEventBus,
         sameService: SameService
     ) = SameMessageDecodedConsumer(eventBus, systemEventBus, sameService)
+
+    @Bean
+    fun audioSegmentAnalyzedSameConsumer(
+        eventBus: PipelineEventBus,
+        systemEventBus: SystemEventBus,
+        sameCandidateDetector: SameCandidateDetector
+    ) = AudioSegmentAnalyzedSameConsumer(eventBus, systemEventBus, sameCandidateDetector)
+
+    @Bean
+    fun sameCandidateDetector(datafill: SameDatafill) = SameCandidateDetector(datafill)
 
     @Bean
     fun sameStateRepository(): SameRepository = InMemorySameRepository()

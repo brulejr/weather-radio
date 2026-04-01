@@ -22,17 +22,31 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.same
+package io.jrb.labs.weatherradio.features.same.messaging
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME
-import org.springframework.boot.context.properties.ConfigurationProperties
-import java.nio.file.Path
+import io.jrb.labs.commons.eventbus.SystemEventBus
+import io.jrb.labs.weatherradio.events.AbstractPipelineEventConsumer
+import io.jrb.labs.weatherradio.events.PipelineEvent
+import io.jrb.labs.weatherradio.events.PipelineEventBus
+import io.jrb.labs.weatherradio.features.ingestion.model.AudioSegment
+import io.jrb.labs.weatherradio.features.same.service.SameCandidateDetector
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_SAME)
-data class SameDatafill(
-    val enabled: Boolean = true,
-    val candidateWindowMs: Int = 750,
-    val minSuspiciousWindows: Int = 3,
-    val saveCandidateDebugSnippets: Boolean = true,
-    val candidateOutputDir: Path = Path.of("./var/weather-radio/same-candidates")
-)
+class AudioSegmentAnalyzedSameConsumer(
+    eventBus: PipelineEventBus,
+    systemEventBus: SystemEventBus,
+    private val sameCandidateDetector: SameCandidateDetector
+) : AbstractPipelineEventConsumer<PipelineEvent.AudioSegmentAnalyzed>(
+    PipelineEvent.AudioSegmentAnalyzed::class,
+    eventBus,
+    systemEventBus
+) {
+    override suspend fun handleEvent(event: PipelineEvent.AudioSegmentAnalyzed) {
+        if (event.contentHint != AudioSegment.ContentHint.POSSIBLE_SAME &&
+            event.contentHint != AudioSegment.ContentHint.TONE_BURST
+        ) {
+            return
+        }
+
+        sameCandidateDetector.inspect(event)
+    }
+}

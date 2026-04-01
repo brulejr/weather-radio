@@ -48,3 +48,10 @@ application.analysis:
   analysis-window-ms: 250
   suspicious-window-zcr-threshold: 0.18
   suspicious-cluster-min-count: 3
+
+application.same:
+  enabled: true
+  candidate-window-ms: 750
+  min-suspicious-windows: 3
+  save-candidate-debug-snippets: true
+  candidate-output-dir: ./var/weather-radio/same-candidates

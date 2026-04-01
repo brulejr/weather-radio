@@ -46,7 +46,11 @@ sealed class PipelineEvent : Event {
         val contentHint: AudioSegment.ContentHint,
         val rmsLevel: Double,
         val peakLevel: Int,
-        val zeroCrossingRate: Double
+        val zeroCrossingRate: Double,
+        val rmsVariance: Double,
+        val suspiciousWindowCount: Int,
+        val totalWindowCount: Int,
+        val suspiciousOffsetsMs: List<Long>
     ) : PipelineEvent()
 
     data class SameMessageDecoded(

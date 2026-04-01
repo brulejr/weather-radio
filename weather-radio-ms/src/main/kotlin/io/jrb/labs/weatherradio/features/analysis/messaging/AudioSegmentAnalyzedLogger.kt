@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,13 +42,17 @@ class AudioSegmentAnalyzedLogger(
 
     override suspend fun handleEvent(event: PipelineEvent.AudioSegmentAnalyzed) {
         logger.info(
-            "Audio segment analyzed: stationId={}, segmentId={}, hint={}, rms={}, peak={}, zcr={}, audioPath={}",
+            "Audio segment analyzed: stationId={}, segmentId={}, hint={}, rms={}, peak={}, zcr={}, variance={}, suspicious={}/{}, offsets={}, audioPath={}",
             event.stationId,
             event.segmentId,
             event.contentHint,
             event.rmsLevel,
             event.peakLevel,
             event.zeroCrossingRate,
+            event.rmsVariance,
+            event.suspiciousWindowCount,
+            event.totalWindowCount,
+            event.suspiciousOffsetsMs,
             event.audioPath
         )
     }

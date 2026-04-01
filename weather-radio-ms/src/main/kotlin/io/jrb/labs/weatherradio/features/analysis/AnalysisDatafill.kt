@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,5 +35,8 @@ data class AnalysisDatafill(
     val toneZeroCrossingThreshold: Double = 0.20,
     val sameZeroCrossingThreshold: Double = 0.14,
     val voiceRmsVarianceThreshold: Double = 250_000.0,
-    val windowSizeSamples: Int = 1024
+    val windowSizeSamples: Int = 1024,
+    val analysisWindowMs: Int = 250,
+    val suspiciousWindowZcrThreshold: Double = 0.18,
+    val suspiciousClusterMinCount: Int = 3
 )

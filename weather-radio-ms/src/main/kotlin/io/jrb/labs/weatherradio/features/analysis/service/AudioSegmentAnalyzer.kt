@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,13 @@ class AudioSegmentAnalyzer(
     private val datafill: AnalysisDatafill
 ) {
 
+    private data class WindowMetrics(
+        val offsetMs: Long,
+        val rms: Double,
+        val peak: Int,
+        val zcr: Double
+    )
+
     fun analyze(path: Path): AudioSegmentAnalysis {
         val bytes = Files.readAllBytes(path)
         if (bytes.size < 4) {
@@ -47,7 +54,10 @@ class AudioSegmentAnalyzer(
                 rmsLevel = 0.0,
                 peakLevel = 0,
                 zeroCrossingRate = 0.0,
-                rmsVariance = 0.0
+                rmsVariance = 0.0,
+                suspiciousWindowCount = 0,
+                totalWindowCount = 0,
+                suspiciousOffsetsMs = emptyList()
             )
         }
 
@@ -66,45 +76,147 @@ class AudioSegmentAnalyzer(
                 rmsLevel = 0.0,
                 peakLevel = 0,
                 zeroCrossingRate = 0.0,
-                rmsVariance = 0.0
+                rmsVariance = 0.0,
+                suspiciousWindowCount = 0,
+                totalWindowCount = 0,
+                suspiciousOffsetsMs = emptyList()
             )
         }
 
-        var sumSquares = 0.0
-        var peak = 0
-        var zeroCrossings = 0
-
-        for (idx in actualSamples.indices) {
-            val sample = actualSamples[idx].toInt()
-            val magnitude = abs(sample)
-
-            if (magnitude > peak) {
-                peak = magnitude
-            }
-
-            sumSquares += sample.toDouble() * sample.toDouble()
-
-            if (idx > 0) {
-                val prev = actualSamples[idx - 1].toInt()
-                if ((prev < 0 && sample >= 0) || (prev >= 0 && sample < 0)) {
-                    zeroCrossings++
-                }
-            }
-        }
-
-        val rms = sqrt(sumSquares / actualSamples.size)
-        val zcr = zeroCrossings.toDouble() / actualSamples.size.toDouble()
+        val rms = computeRms(actualSamples)
+        val peak = computePeak(actualSamples)
+        val zcr = computeZeroCrossingRate(actualSamples)
         val rmsVariance = computeWindowedRmsVariance(actualSamples, datafill.windowSizeSamples)
 
-        val hint = classify(rms, peak, zcr, rmsVariance)
+        val windows = analyzeWindows(actualSamples)
+        val suspiciousOffsets = findSuspiciousOffsets(windows)
+
+        val hint = classify(
+            rms = rms,
+            peak = peak,
+            zcr = zcr,
+            rmsVariance = rmsVariance,
+            suspiciousWindowCount = suspiciousOffsets.size,
+            totalWindowCount = windows.size
+        )
 
         return AudioSegmentAnalysis(
             contentHint = hint,
             rmsLevel = (rms * 100.0).roundToInt() / 100.0,
             peakLevel = peak,
             zeroCrossingRate = (zcr * 10000.0).roundToInt() / 10000.0,
-            rmsVariance = (rmsVariance * 100.0).roundToInt() / 100.0
+            rmsVariance = (rmsVariance * 100.0).roundToInt() / 100.0,
+            suspiciousWindowCount = suspiciousOffsets.size,
+            totalWindowCount = windows.size,
+            suspiciousOffsetsMs = suspiciousOffsets
         )
+    }
+
+    private fun analyzeWindows(samples: ShortArray): List<WindowMetrics> {
+        val samplesPerWindow = maxOf(1, (22050 * datafill.analysisWindowMs) / 1000)
+
+        val windows = mutableListOf<WindowMetrics>()
+        var start = 0
+        var offsetMs = 0L
+
+        while (start < samples.size) {
+            val end = minOf(start + samplesPerWindow, samples.size)
+            val window = samples.sliceArray(start until end)
+
+            windows += WindowMetrics(
+                offsetMs = offsetMs,
+                rms = computeRms(window),
+                peak = computePeak(window),
+                zcr = computeZeroCrossingRate(window)
+            )
+
+            start = end
+            offsetMs += datafill.analysisWindowMs.toLong()
+        }
+
+        return windows
+    }
+
+    private fun findSuspiciousOffsets(windows: List<WindowMetrics>): List<Long> {
+        return windows
+            .filter { window ->
+                window.rms >= datafill.voiceRmsThreshold &&
+                        window.zcr >= datafill.suspiciousWindowZcrThreshold
+            }
+            .map { it.offsetMs }
+    }
+
+    private fun classify(
+        rms: Double,
+        peak: Int,
+        zcr: Double,
+        rmsVariance: Double,
+        suspiciousWindowCount: Int,
+        totalWindowCount: Int
+    ): AudioSegment.ContentHint {
+        if (rms < datafill.lowRmsThreshold || peak < 1000) {
+            return AudioSegment.ContentHint.UNKNOWN
+        }
+
+        if (suspiciousWindowCount >= datafill.suspiciousClusterMinCount) {
+            return AudioSegment.ContentHint.POSSIBLE_SAME
+        }
+
+        if (rms >= datafill.voiceRmsThreshold &&
+            rmsVariance >= datafill.voiceRmsVarianceThreshold
+        ) {
+            return AudioSegment.ContentHint.VOICE
+        }
+
+        if (totalWindowCount > 0 &&
+            suspiciousWindowCount.toDouble() / totalWindowCount.toDouble() > 0.6 &&
+            zcr >= datafill.toneZeroCrossingThreshold
+        ) {
+            return AudioSegment.ContentHint.TONE_BURST
+        }
+
+        if (rms >= datafill.voiceRmsThreshold) {
+            return AudioSegment.ContentHint.VOICE
+        }
+
+        return AudioSegment.ContentHint.UNKNOWN
+    }
+
+    private fun computeRms(samples: ShortArray): Double {
+        var sumSquares = 0.0
+        for (sample in samples) {
+            val value = sample.toDouble()
+            sumSquares += value * value
+        }
+        return sqrt(sumSquares / samples.size)
+    }
+
+    private fun computePeak(samples: ShortArray): Int {
+        var peak = 0
+        for (sample in samples) {
+            val magnitude = abs(sample.toInt())
+            if (magnitude > peak) {
+                peak = magnitude
+            }
+        }
+        return peak
+    }
+
+    private fun computeZeroCrossingRate(samples: ShortArray): Double {
+        if (samples.size < 2) {
+            return 0.0
+        }
+
+        var zeroCrossings = 0
+        for (idx in 1 until samples.size) {
+            val prev = samples[idx - 1].toInt()
+            val sample = samples[idx].toInt()
+            if ((prev < 0 && sample >= 0) || (prev >= 0 && sample < 0)) {
+                zeroCrossings++
+            }
+        }
+
+        return zeroCrossings.toDouble() / samples.size.toDouble()
     }
 
     private fun computeWindowedRmsVariance(
@@ -121,15 +233,7 @@ class AudioSegmentAnalyzer(
         while (start < samples.size) {
             val end = minOf(start + windowSize, samples.size)
             val window = samples.sliceArray(start until end)
-
-            var sumSquares = 0.0
-            for (sample in window) {
-                val value = sample.toDouble()
-                sumSquares += value * value
-            }
-
-            val rms = sqrt(sumSquares / window.size)
-            windowRmsValues += rms
+            windowRmsValues += computeRms(window)
             start = end
         }
 
@@ -138,49 +242,8 @@ class AudioSegmentAnalyzer(
         }
 
         val mean = windowRmsValues.average()
-        val variance = windowRmsValues
+        return windowRmsValues
             .map { value -> (value - mean) * (value - mean) }
             .average()
-
-        return variance
     }
-
-    private fun classify(
-        rms: Double,
-        peak: Int,
-        zcr: Double,
-        rmsVariance: Double
-    ): AudioSegment.ContentHint {
-        if (rms < datafill.lowRmsThreshold || peak < 1000) {
-            return AudioSegment.ContentHint.UNKNOWN
-        }
-
-        // Speech usually has a changing envelope even when riding on hiss/noise.
-        if (rms >= datafill.voiceRmsThreshold &&
-            rmsVariance >= datafill.voiceRmsVarianceThreshold
-        ) {
-            return AudioSegment.ContentHint.VOICE
-        }
-
-        // Tone bursts are usually more stable in energy.
-        if (zcr >= datafill.toneZeroCrossingThreshold &&
-            rms >= datafill.voiceRmsThreshold &&
-            rmsVariance < datafill.voiceRmsVarianceThreshold
-        ) {
-            return AudioSegment.ContentHint.TONE_BURST
-        }
-
-        if (zcr in datafill.sameZeroCrossingThreshold..datafill.toneZeroCrossingThreshold &&
-            rms >= datafill.voiceRmsThreshold
-        ) {
-            return AudioSegment.ContentHint.POSSIBLE_SAME
-        }
-
-        if (rms >= datafill.voiceRmsThreshold) {
-            return AudioSegment.ContentHint.VOICE
-        }
-
-        return AudioSegment.ContentHint.UNKNOWN
-    }
-
 }

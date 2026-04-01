@@ -43,3 +43,8 @@ application.analysis:
   voice-rms-threshold: 1800.0
   tone-zero-crossing-threshold: 0.20
   same-zero-crossing-threshold: 0.14
+  voice-rms-variance-threshold: 250000.0
+  window-size-samples: 1024
+  analysis-window-ms: 250
+  suspicious-window-zcr-threshold: 0.18
+  suspicious-cluster-min-count: 3

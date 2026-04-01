@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,11 @@ class AudioSegmentAnalyzedPublisher(
                 contentHint = analysis.contentHint,
                 rmsLevel = analysis.rmsLevel,
                 peakLevel = analysis.peakLevel,
-                zeroCrossingRate = analysis.zeroCrossingRate
+                zeroCrossingRate = analysis.zeroCrossingRate,
+                rmsVariance = analysis.rmsVariance,
+                suspiciousWindowCount = analysis.suspiciousWindowCount,
+                totalWindowCount = analysis.totalWindowCount,
+                suspiciousOffsetsMs = analysis.suspiciousOffsetsMs
             )
         )
     }

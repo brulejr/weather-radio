@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,5 +31,8 @@ data class AudioSegmentAnalysis(
     val rmsLevel: Double,
     val peakLevel: Int,
     val zeroCrossingRate: Double,
-    val rmsVariance: Double
+    val rmsVariance: Double,
+    val suspiciousWindowCount: Int,
+    val totalWindowCount: Int,
+    val suspiciousOffsetsMs: List<Long>
 )

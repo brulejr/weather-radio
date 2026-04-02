@@ -36,6 +36,9 @@ import io.jrb.labs.weatherradio.events.AlertOpenedEvent
 import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
 import io.jrb.labs.weatherradio.events.AlertStateStoredEvent
 import io.jrb.labs.weatherradio.events.AlertStoreFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.AudioFramePublishedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.SameHeaderDecodedEvent
@@ -145,18 +148,6 @@ class ObservabilityEventLoggerFeature(
             )
         }
 
-        subscriptions += weatherRadioEventBus.subscribe<AlertOpenedEvent> { event ->
-            log.info(
-                "alert-opened stationId={} alertId={} eventCode={} senderId={} counties={} locallyRelevant={}",
-                event.stationId,
-                event.alertId,
-                event.header.eventCode,
-                event.header.senderId,
-                event.header.countyCodes,
-                event.locallyRelevant,
-            )
-        }
-
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureStartedEvent> { event ->
             log.info(
                 "alert-audio-capture-started stationId={} alertId={} reason={}",
@@ -207,6 +198,35 @@ class ObservabilityEventLoggerFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertStoreFailedEvent> { event ->
             log.warn(
                 "alert-store-failed stationId={} alertId={} reason={}",
+                event.stationId,
+                event.alertId,
+                event.reason,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionStartedEvent> { event ->
+            log.info(
+                "alert-transcription-started stationId={} alertId={} engineName={}",
+                event.stationId,
+                event.alertId,
+                event.engineName,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptCreatedEvent> { event ->
+            log.info(
+                "alert-transcript-created stationId={} alertId={} engineName={} confidence={} transcriptText={}",
+                event.stationId,
+                event.alertId,
+                event.transcript.engineName,
+                event.transcript.confidence,
+                event.transcript.transcriptText,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFailedEvent> { event ->
+            log.warn(
+                "alert-transcription-failed stationId={} alertId={} reason={}",
                 event.stationId,
                 event.alertId,
                 event.reason,

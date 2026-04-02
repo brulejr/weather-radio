@@ -63,6 +63,9 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureStartedEvent> { handleAudioCaptureStarted(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCapturedEvent> { handleAudioCaptured(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureFailedEvent> { handleAudioCaptureFailed(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionStartedEvent> { handleTranscriptionStarted(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptCreatedEvent> { handleTranscriptCreated(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFailedEvent> { handleTranscriptionFailed(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -205,6 +208,50 @@ class AlertStoreFeature(
             alertId = event.alertId,
             artifact = StoredAlertArtifact(
                 artifactType = "audio-capture-failed",
+                createdAt = clock.instant(),
+                details = mapOf("reason" to event.reason),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptionStarted(event: AlertTranscriptionStartedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcription-started",
+                createdAt = clock.instant(),
+                details = mapOf("engineName" to event.engineName),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptCreated(event: AlertTranscriptCreatedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcript-created",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "engineName" to event.transcript.engineName,
+                    "confidence" to event.transcript.confidence,
+                    "transcriptText" to event.transcript.transcriptText,
+                    "details" to event.transcript.details,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptionFailed(event: AlertTranscriptionFailedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcription-failed",
                 createdAt = clock.instant(),
                 details = mapOf("reason" to event.reason),
             ),

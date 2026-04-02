@@ -33,7 +33,7 @@ import io.jrb.labs.weatherradio.events.AudioFramePublishedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.radioinput.RadioInputDatafill
-import io.jrb.labs.weatherradio.ports.radio.RadioAudioSource
+import io.jrb.labs.weatherradio.features.radioinput.port.RadioAudioSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

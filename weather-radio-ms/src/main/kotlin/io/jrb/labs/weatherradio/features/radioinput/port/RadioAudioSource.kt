@@ -22,29 +22,12 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.support.process
+package io.jrb.labs.weatherradio.features.radioinput.port
 
-import java.io.InputStream
-import java.util.concurrent.atomic.AtomicReference
+import io.jrb.labs.weatherradio.domain.radio.AudioFrame
+import io.jrb.labs.weatherradio.domain.radio.RadioStation
+import kotlinx.coroutines.flow.Flow
 
-class ManagedExternalProcess(
-    private val command: List<String>
-) {
-    private val processRef = AtomicReference<Process?>()
-
-    fun start(): InputStream {
-        val process = ProcessBuilder(command)
-            .redirectErrorStream(true)
-            .start()
-
-        processRef.set(process)
-        return process.inputStream
-    }
-
-    fun stop() {
-        processRef.getAndSet(null)?.destroy()
-    }
-
-    fun isRunning(): Boolean =
-        processRef.get()?.isAlive == true
+interface RadioAudioSource {
+    fun stream(station: RadioStation): Flow<AudioFrame>
 }

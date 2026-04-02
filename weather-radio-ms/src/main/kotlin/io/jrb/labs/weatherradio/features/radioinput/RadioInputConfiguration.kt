@@ -30,7 +30,7 @@ import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_RADIO_INPUT
 import io.jrb.labs.weatherradio.features.radioinput.service.RadioInputFeature
 import io.jrb.labs.weatherradio.features.radioinput.support.SyntheticRadioAudioSource
-import io.jrb.labs.weatherradio.ports.radio.RadioAudioSource
+import io.jrb.labs.weatherradio.features.radioinput.port.RadioAudioSource
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan

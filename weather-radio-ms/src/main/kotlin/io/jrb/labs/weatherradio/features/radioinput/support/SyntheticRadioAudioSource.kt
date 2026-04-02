@@ -26,7 +26,7 @@ package io.jrb.labs.weatherradio.features.radioinput.support
 import io.jrb.labs.weatherradio.domain.radio.AudioFrame
 import io.jrb.labs.weatherradio.domain.radio.RadioStation
 import io.jrb.labs.weatherradio.features.radioinput.RadioInputDatafill
-import io.jrb.labs.weatherradio.ports.radio.RadioAudioSource
+import io.jrb.labs.weatherradio.features.radioinput.port.RadioAudioSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

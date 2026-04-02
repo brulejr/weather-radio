@@ -24,6 +24,7 @@
 
 package io.jrb.labs.weatherradio.features.radioinput
 
+import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.metrics.FeatureMetricsFactory
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_RADIO_INPUT
@@ -59,12 +60,14 @@ class RadioInputConfiguration {
         eventBus: WeatherRadioEventBus,
         clock: Clock,
         metricsFactory: FeatureMetricsFactory,
+        systemEventBus: SystemEventBus,
     ): RadioInputFeature = RadioInputFeature(
         datafill = datafill,
         audioSource = audioSource,
         eventBus = eventBus,
         clock = clock,
         metricsFactory = metricsFactory,
+        systemEventBus = systemEventBus
     )
 
     @Bean

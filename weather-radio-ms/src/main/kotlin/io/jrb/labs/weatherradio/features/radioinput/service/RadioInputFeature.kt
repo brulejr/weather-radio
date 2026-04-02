@@ -24,14 +24,16 @@
 
 package io.jrb.labs.weatherradio.features.radioinput.service
 
+import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.metrics.FeatureMetricsFactory
+import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.domain.radio.RadioStation
+import io.jrb.labs.weatherradio.events.AudioFrameAvailableEvent
 import io.jrb.labs.weatherradio.events.AudioFramePublishedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.radioinput.RadioInputDatafill
 import io.jrb.labs.weatherradio.ports.radio.RadioAudioSource
-import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,11 +48,13 @@ class RadioInputFeature(
     private val eventBus: WeatherRadioEventBus,
     private val clock: Clock,
     private val metricsFactory: FeatureMetricsFactory,
-) {
+    systemEventBus: SystemEventBus
+) : ControllableService(systemEventBus) {
+
     private val log = LoggerFactory.getLogger(javaClass)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    fun start() {
+    override fun onStart() {
         if (!datafill.enabled) {
             eventBus.send(
                 FeatureHeartbeatEvent(
@@ -95,6 +99,13 @@ class RadioInputFeature(
 
                 audioSource.stream(station).collect { frame ->
                     eventBus.publish(
+                        AudioFrameAvailableEvent(
+                            stationId = frame.stationId,
+                            frame = frame,
+                        )
+                    )
+
+                    eventBus.publish(
                         AudioFramePublishedEvent(
                             stationId = frame.stationId,
                             sampleRateHz = frame.sampleRateHz,
@@ -121,8 +132,7 @@ class RadioInputFeature(
         )
     }
 
-    @PreDestroy
-    fun stop() {
+    override fun onStop() {
         scope.cancel()
 
         eventBus.send(
@@ -135,4 +145,5 @@ class RadioInputFeature(
             )
         )
     }
+
 }

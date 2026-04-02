@@ -64,6 +64,11 @@ application:
     max-concurrent-captures-per-station: 1
     debug-logging: true
 
+  alert-store:
+    enabled: true
+    store-audio-frames-in-memory: true
+    debug-logging: true
+
   observability:
     enabled: true
     log-heartbeats: true

@@ -22,22 +22,24 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.alertorchestration
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.util.UUID
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_ORCHESTRATION
+import jakarta.validation.constraints.Min
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-data class AlertOpenedEvent(
-    override val stationId: String,
-    override val alertId: String,
-    val header: SameHeader,
-    val locallyRelevant: Boolean,
-    override val correlationId: UUID? = null,
-    override val causationId: UUID? = null,
-) : AbstractWeatherRadioEvent(
-    featureId = "alert-orchestration",
-    stationId = stationId,
-    alertId = alertId,
-    correlationId = correlationId,
-    causationId = causationId,
+@ConfigurationProperties(prefix = CONFIG_PREFIX_ALERT_ORCHESTRATION)
+data class AlertOrchestrationDatafill(
+
+    val enabled: Boolean = true,
+
+    val localCountyCodes: List<String> = emptyList(),
+
+    val triggerRecordingOnOpen: Boolean = true,
+
+    @field:Min(1)
+    val duplicateSuppressionMinutes: Long = 15,
+
+    val debugLogging: Boolean = false
+
 )

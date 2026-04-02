@@ -48,6 +48,15 @@ application:
     min-confidence: 0.80
     debug-logging: false
 
+  alert-orchestration:
+    enabled: true
+    local-county-codes:
+      - "05007"
+      - "50007"
+    trigger-recording-on-open: true
+    duplicate-suppression-minutes: 15
+    debug-logging: true
+
   observability:
     enabled: true
     log-heartbeats: true

@@ -45,7 +45,7 @@ class SyntheticPatternSameFrameDecoder : SameFrameDecoder {
                     rawHeader = "ZCZC-WXR-RWT-050007+0030-0010100-KXXX/NWS-",
                     originator = "WXR",
                     eventCode = "RWT",
-                    countyCodes = listOf("050007"),
+                    countyCodes = listOf("05007"),
                     purgeTime = "0030",
                     senderId = "KXXX/NWS",
                     issuedAt = null,

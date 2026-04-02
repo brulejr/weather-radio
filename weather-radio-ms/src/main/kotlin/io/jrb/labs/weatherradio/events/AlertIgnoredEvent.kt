@@ -27,17 +27,15 @@ package io.jrb.labs.weatherradio.events
 import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
 import java.util.UUID
 
-data class AlertOpenedEvent(
+data class AlertIgnoredEvent(
     override val stationId: String,
-    override val alertId: String,
     val header: SameHeader,
-    val locallyRelevant: Boolean,
+    val reason: String,
     override val correlationId: UUID? = null,
     override val causationId: UUID? = null,
 ) : AbstractWeatherRadioEvent(
     featureId = "alert-orchestration",
     stationId = stationId,
-    alertId = alertId,
     correlationId = correlationId,
     causationId = causationId,
 )

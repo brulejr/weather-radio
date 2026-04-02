@@ -27,6 +27,9 @@ package io.jrb.labs.weatherradio.features.observability.service
 import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
+import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
+import io.jrb.labs.weatherradio.events.AlertOpenedEvent
+import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
 import io.jrb.labs.weatherradio.events.AudioFramePublishedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.SameHeaderDecodedEvent
@@ -103,6 +106,39 @@ class ObservabilityEventLoggerFeature(
                 )
             }
         }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertOpenedEvent> { event ->
+            log.info(
+                "alert-opened stationId={} alertId={} eventCode={} senderId={} counties={} locallyRelevant={}",
+                event.stationId,
+                event.alertId,
+                event.header.eventCode,
+                event.header.senderId,
+                event.header.countyCodes,
+                event.locallyRelevant,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertIgnoredEvent> { event ->
+            log.info(
+                "alert-ignored stationId={} eventCode={} senderId={} reason={}",
+                event.stationId,
+                event.header.eventCode,
+                event.header.senderId,
+                event.reason,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertRecordingRequestedEvent> { event ->
+            log.info(
+                "alert-recording-requested stationId={} alertId={} eventCode={} reason={}",
+                event.stationId,
+                event.alertId,
+                event.header.eventCode,
+                event.reason,
+            )
+        }
+
     }
 
     override fun onStop() {

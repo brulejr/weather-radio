@@ -24,11 +24,13 @@
 
 package io.jrb.labs.weatherradio.events
 
+import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
 import java.util.UUID
 
 data class AlertRecordingRequestedEvent(
     override val stationId: String,
     override val alertId: String,
+    val header: SameHeader,
     val reason: String,
     override val correlationId: UUID? = null,
     override val causationId: UUID? = null,

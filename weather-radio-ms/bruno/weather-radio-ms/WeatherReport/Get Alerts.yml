@@ -1,11 +1,11 @@
 info:
-  name: Get Weather Report
+  name: Get Alerts
   type: http
   seq: 1
 
 http:
   method: GET
-  url: "{{weather_radio_ms_url}}/api/weather/report"
+  url: "{{weather_radio_ms_url}}/api/alerts"
   auth: inherit
 
 settings:

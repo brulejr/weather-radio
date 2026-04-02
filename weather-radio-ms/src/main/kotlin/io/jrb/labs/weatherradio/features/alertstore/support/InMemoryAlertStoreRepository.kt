@@ -29,6 +29,7 @@ import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
 import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryAlertStoreRepository : AlertStoreRepository {
+
     private val records = ConcurrentHashMap<String, StoredAlertRecord>()
 
     override fun upsert(record: StoredAlertRecord) {
@@ -36,4 +37,13 @@ class InMemoryAlertStoreRepository : AlertStoreRepository {
     }
 
     override fun findByAlertId(alertId: String): StoredAlertRecord? = records[alertId]
+
+    override fun findAll(): List<StoredAlertRecord> =
+        records.values.sortedByDescending { it.updatedAt }
+
+    override fun findRecent(limit: Int): List<StoredAlertRecord> =
+        records.values
+            .sortedByDescending { it.updatedAt }
+            .take(limit)
+
 }

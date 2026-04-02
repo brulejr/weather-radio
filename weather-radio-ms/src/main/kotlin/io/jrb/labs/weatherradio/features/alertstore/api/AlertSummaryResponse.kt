@@ -22,13 +22,16 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore.port
+package io.jrb.labs.weatherradio.features.alertstore.api
 
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredAlertRecord
-
-interface AlertStoreRepository {
-    fun upsert(record: StoredAlertRecord)
-    fun findByAlertId(alertId: String): StoredAlertRecord?
-    fun findAll(): List<StoredAlertRecord>
-    fun findRecent(limit: Int = 50): List<StoredAlertRecord>
-}
+data class AlertSummaryResponse(
+    val alertId: String,
+    val stationId: String,
+    val state: String,
+    val eventCode: String?,
+    val senderId: String?,
+    val countyCodes: List<String>,
+    val locallyRelevant: Boolean?,
+    val openedAt: String?,
+    val updatedAt: String,
+)

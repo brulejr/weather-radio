@@ -22,13 +22,10 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore.port
+package io.jrb.labs.weatherradio.features.alertstore.api
 
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredAlertRecord
-
-interface AlertStoreRepository {
-    fun upsert(record: StoredAlertRecord)
-    fun findByAlertId(alertId: String): StoredAlertRecord?
-    fun findAll(): List<StoredAlertRecord>
-    fun findRecent(limit: Int = 50): List<StoredAlertRecord>
-}
+data class AlertArtifactResponse(
+    val artifactType: String,
+    val createdAt: String,
+    val details: Map<String, Any?> = emptyMap(),
+)

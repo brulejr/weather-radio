@@ -29,8 +29,8 @@ import io.jrb.labs.commons.metrics.FeatureMetricsFactory
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME_DECODER
 import io.jrb.labs.weatherradio.features.samedecoder.service.SameDecoderFeature
-import io.jrb.labs.weatherradio.features.samedecoder.support.NoOpSameFrameDecoder
 import io.jrb.labs.weatherradio.features.samedecoder.support.SameFrameDecoder
+import io.jrb.labs.weatherradio.features.samedecoder.support.SyntheticPatternSameFrameDecoder
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -44,7 +44,7 @@ import java.time.Clock
 class SameDecoderConfiguration {
 
     @Bean
-    fun sameFrameDecoder(): SameFrameDecoder = NoOpSameFrameDecoder()
+    fun sameFrameDecoder(): SameFrameDecoder = SyntheticPatternSameFrameDecoder()
 
     @Bean
     fun sameDecoderFeature(

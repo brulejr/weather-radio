@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 package io.jrb.labs.weatherradio.features.radioinput.support
 
 import io.jrb.labs.weatherradio.domain.radio.AudioFrame
@@ -49,28 +48,38 @@ class SyntheticRadioAudioSource(
         val channelCount = datafill.channelCount
 
         var phase = 0.0
-        val frequencyHz = 1050.0
+        var frameCounter = 0L
+        val baseFrequencyHz = 1050.0
 
         while (true) {
-            val start = Instant.now(clock)
+            val frameStart = Instant.now(clock)
             val samples = FloatArray(samplesPerFrame * channelCount)
 
-            for (i in samples.indices step channelCount) {
+            for (sampleIndex in 0 until samplesPerFrame) {
                 val signal = sin(phase) * 0.15
                 val noise = Random.nextDouble(-0.01, 0.01)
                 val value = (signal + noise).toFloat()
 
-                for (c in 0 until channelCount) {
-                    samples[i + c] = value
+                val baseOffset = sampleIndex * channelCount
+                for (channel in 0 until channelCount) {
+                    samples[baseOffset + channel] = value
                 }
 
-                phase += 2.0 * PI * frequencyHz / sampleRate
+                phase += 2.0 * PI * baseFrequencyHz / sampleRate
                 if (phase > 2.0 * PI) {
                     phase -= 2.0 * PI
                 }
             }
 
-            val end = Instant.now(clock)
+            frameCounter++
+
+            if (datafill.injectSyntheticSame &&
+                frameCounter % datafill.syntheticSameIntervalFrames.toLong() == 0L
+            ) {
+                injectSyntheticSameMarker(samples, channelCount)
+            }
+
+            val frameEnd = Instant.now(clock)
 
             emit(
                 AudioFrame(
@@ -78,12 +87,63 @@ class SyntheticRadioAudioSource(
                     sampleRateHz = sampleRate,
                     channelCount = channelCount,
                     samples = samples,
-                    frameStart = start,
-                    frameEnd = end,
+                    frameStart = frameStart,
+                    frameEnd = frameEnd,
                 )
             )
 
             delay(intervalMs)
         }
+    }
+
+    private fun injectSyntheticSameMarker(
+        samples: FloatArray,
+        channelCount: Int,
+    ) {
+        if (samples.isEmpty()) return
+
+        val sampleFrames = samples.size / channelCount
+        if (sampleFrames < 12) return
+
+        val runLengthFrames = maxOf(8, minOf(120, sampleFrames / 8))
+        var frameOffset = 0
+
+        repeat(3) {
+            frameOffset = writeRun(
+                samples = samples,
+                channelCount = channelCount,
+                startFrameOffset = frameOffset,
+                runLengthFrames = runLengthFrames,
+                value = 0.95f,
+            )
+
+            frameOffset = writeRun(
+                samples = samples,
+                channelCount = channelCount,
+                startFrameOffset = frameOffset,
+                runLengthFrames = runLengthFrames,
+                value = -0.95f,
+            )
+        }
+    }
+
+    private fun writeRun(
+        samples: FloatArray,
+        channelCount: Int,
+        startFrameOffset: Int,
+        runLengthFrames: Int,
+        value: Float,
+    ): Int {
+        val totalFrames = samples.size / channelCount
+        val endFrameExclusive = minOf(startFrameOffset + runLengthFrames, totalFrames)
+
+        for (frame in startFrameOffset until endFrameExclusive) {
+            val baseOffset = frame * channelCount
+            for (channel in 0 until channelCount) {
+                samples[baseOffset + channel] = value
+            }
+        }
+
+        return endFrameExclusive
     }
 }

@@ -58,6 +58,11 @@ data class RadioInputDatafill(
             countyCodes = emptyList(),
         )
     ),
+
+    val injectSyntheticSame: Boolean = true,
+
+    @field:Min(1)
+    val syntheticSameIntervalFrames: Int = 20,
 ) {
     enum class Mode {
         SYNTHETIC,

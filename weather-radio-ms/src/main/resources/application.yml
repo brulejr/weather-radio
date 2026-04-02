@@ -31,6 +31,8 @@ application:
     publish-interval-ms: 250
     sample-rate-hz: 22050
     channel-count: 1
+    inject-synthetic-same: true
+    synthetic-same-interval-frames: 20
     stations:
       - station-id: noaa-burlington
         display-name: NOAA Burlington

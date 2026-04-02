@@ -23,35 +23,18 @@ info:
     description: RTL433 data processing pipeline for rtl_433 MQTT events
     profile: ${spring.profiles.active}
 
-application.ingestion:
-  enabled: true
-  mode: tcp
-  station-name: NOAA Weather Radio Burlington
-  station-call-sign: KIG60
-  region-name: South Burlington, VT
-  frequency-mhz: 162.425
-  tcp-host: rtlsdr01.brulenet.dev
-  tcp-port: 7355
-  sample-rate-hz: 22050
-  segment-duration: 20s
-  output-dir: ./var/weather-radio/audio
-  reconnect-delay: 5s
+application:
 
-application.analysis:
-  enabled: true
-  low-rms-threshold: 600.0
-  voice-rms-threshold: 1800.0
-  tone-zero-crossing-threshold: 0.20
-  same-zero-crossing-threshold: 0.14
-  voice-rms-variance-threshold: 250000.0
-  window-size-samples: 1024
-  analysis-window-ms: 250
-  suspicious-window-zcr-threshold: 0.18
-  suspicious-cluster-min-count: 3
-
-application.same:
-  enabled: true
-  candidate-window-ms: 750
-  min-suspicious-windows: 3
-  save-candidate-debug-snippets: true
-  candidate-output-dir: ./var/weather-radio/same-candidates
+  radio-input:
+    enabled: true
+    mode: SYNTHETIC
+    publish-interval-ms: 250
+    sample-rate-hz: 22050
+    channel-count: 1
+    stations:
+      - station-id: noaa-burlington
+        display-name: NOAA Burlington
+        frequencyMHz: 162.475
+        county-codes:
+          - "05007"
+          - "50007"

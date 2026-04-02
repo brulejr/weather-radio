@@ -31,6 +31,7 @@ import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
+import io.jrb.labs.weatherradio.events.AlertExpiredEvent
 import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
 import io.jrb.labs.weatherradio.events.AlertOpenedEvent
 import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
@@ -230,6 +231,17 @@ class ObservabilityEventLoggerFeature(
                 event.stationId,
                 event.alertId,
                 event.reason,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertExpiredEvent> { event ->
+            log.info(
+                "alert-expired stationId={} alertId={} eventCode={} senderId={} expiredAt={}",
+                event.stationId,
+                event.alertId,
+                event.header.eventCode,
+                event.header.senderId,
+                event.expiredAt,
             )
         }
 

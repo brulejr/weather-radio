@@ -45,9 +45,21 @@ class AlertQueryController(
     @GetMapping
     fun listAlerts(
         @RequestParam(name = "limit", defaultValue = "50") limit: Int,
-    ): List<AlertSummaryResponse> =
-        repository.findRecent(limit.coerceAtLeast(1))
+        @RequestParam(name = "state", required = false) state: String?,
+    ): List<AlertSummaryResponse> {
+        val normalizedState = state
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?.uppercase()
+
+        return repository.findRecent(limit.coerceAtLeast(1))
+            .asSequence()
+            .filter { record ->
+                normalizedState == null || record.state.uppercase() == normalizedState
+            }
             .map { it.toSummaryResponse() }
+            .toList()
+    }
 
     @GetMapping("/{alertId}")
     fun getAlert(
@@ -83,11 +95,11 @@ class AlertQueryController(
             locallyRelevant = locallyRelevant,
             openedAt = openedAt?.toString(),
             updatedAt = updatedAt.toString(),
-            artifacts = artifacts.map {
+            artifacts = artifacts.map { artifact ->
                 AlertArtifactResponse(
-                    artifactType = it.artifactType,
-                    createdAt = it.createdAt.toString(),
-                    details = it.details,
+                    artifactType = artifact.artifactType,
+                    createdAt = artifact.createdAt.toString(),
+                    details = artifact.details,
                 )
             },
         )

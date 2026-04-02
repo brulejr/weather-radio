@@ -22,20 +22,22 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertorchestration.model
+package io.jrb.labs.weatherradio.events
 
 import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.time.Instant
+import java.util.UUID
 
-data class ActiveAlertRecord(
-    val alertId: String,
-    val alertKey: AlertKey,
-    val stationId: String,
+data class AlertExpiredEvent(
+    override val stationId: String,
+    override val alertId: String,
     val header: SameHeader,
-    val locallyRelevant: Boolean,
-    val openedAt: Instant,
-    val lastSeenAt: Instant,
-    val state: AlertLifecycleState,
-    val expiresAt: Instant,
-    val expiredAt: Instant? = null,
+    val expiredAt: String,
+    override val correlationId: UUID? = null,
+    override val causationId: UUID? = null,
+) : AbstractWeatherRadioEvent(
+    featureId = "alert-orchestration",
+    stationId = stationId,
+    alertId = alertId,
+    correlationId = correlationId,
+    causationId = causationId,
 )

@@ -27,4 +27,5 @@ package io.jrb.labs.weatherradio.features.alertorchestration.model
 enum class AlertLifecycleState {
     OPEN,
     IGNORED,
+    EXPIRED,
 }

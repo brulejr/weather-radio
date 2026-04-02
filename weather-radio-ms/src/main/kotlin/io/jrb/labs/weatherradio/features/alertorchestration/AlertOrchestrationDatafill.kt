@@ -40,6 +40,12 @@ data class AlertOrchestrationDatafill(
     @field:Min(1)
     val duplicateSuppressionMinutes: Long = 15,
 
+    @field:Min(1000)
+    val expirySweepIntervalMs: Long = 5000,
+
+    @field:Min(1)
+    val retainedExpiredAlertsMinutes: Long = 60,
+
     val debugLogging: Boolean = false
 
 )

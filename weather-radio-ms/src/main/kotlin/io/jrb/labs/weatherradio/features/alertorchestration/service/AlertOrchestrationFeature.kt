@@ -27,6 +27,7 @@ package io.jrb.labs.weatherradio.features.alertorchestration.service
 import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
+import io.jrb.labs.weatherradio.events.AlertExpiredEvent
 import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
 import io.jrb.labs.weatherradio.events.AlertOpenedEvent
 import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
@@ -37,9 +38,18 @@ import io.jrb.labs.weatherradio.features.alertorchestration.AlertOrchestrationDa
 import io.jrb.labs.weatherradio.features.alertorchestration.model.ActiveAlertRecord
 import io.jrb.labs.weatherradio.features.alertorchestration.model.AlertKey
 import io.jrb.labs.weatherradio.features.alertorchestration.model.AlertLifecycleState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -51,10 +61,25 @@ class AlertOrchestrationFeature(
 ) : ControllableService(systemEventBus) {
 
     private val log = LoggerFactory.getLogger(javaClass)
+
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var subscription: Subscription? = null
+    private var expiryJob: Job? = null
+
     private val activeAlerts = ConcurrentHashMap<AlertKey, ActiveAlertRecord>()
+    private val expiredAlerts = ConcurrentHashMap<String, ActiveAlertRecord>()
 
     override fun onStart() {
+        if (!datafill.enabled) {
+            weatherRadioEventBus.send(
+                FeatureHeartbeatEvent(
+                    featureId = "alert-orchestration",
+                    status = "DISABLED",
+                )
+            )
+            return
+        }
+
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
                 featureId = "alert-orchestration",
@@ -63,12 +88,22 @@ class AlertOrchestrationFeature(
                     "localCountyCodes" to datafill.localCountyCodes,
                     "triggerRecordingOnOpen" to datafill.triggerRecordingOnOpen,
                     "duplicateSuppressionMinutes" to datafill.duplicateSuppressionMinutes,
+                    "expirySweepIntervalMs" to datafill.expirySweepIntervalMs,
+                    "retainedExpiredAlertsMinutes" to datafill.retainedExpiredAlertsMinutes,
                 ),
             )
         )
 
         subscription = weatherRadioEventBus.subscribe<SameHeaderDecodedEvent> { event ->
             handleDecodedHeader(event)
+        }
+
+        expiryJob = scope.launch {
+            while (isActive) {
+                delay(datafill.expirySweepIntervalMs)
+                expireAlerts()
+                pruneExpiredAlerts()
+            }
         }
 
         weatherRadioEventBus.send(
@@ -82,7 +117,14 @@ class AlertOrchestrationFeature(
     override fun onStop() {
         subscription?.cancel()
         subscription = null
+
+        expiryJob?.cancel()
+        expiryJob = null
+
+        scope.cancel()
+
         activeAlerts.clear()
+        expiredAlerts.clear()
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -121,22 +163,33 @@ class AlertOrchestrationFeature(
         val now = clock.instant()
         val existing = activeAlerts[alertKey]
         if (existing != null) {
-            val age = Duration.between(existing.lastSeenAt, now).toMinutes()
-            if (age < datafill.duplicateSuppressionMinutes) {
+            val ageMinutes = Duration.between(existing.lastSeenAt, now).toMinutes()
+
+            if (ageMinutes < datafill.duplicateSuppressionMinutes) {
                 if (datafill.debugLogging) {
                     log.debug(
-                        "Suppressing duplicate alert stationId={} eventCode={} senderId={} ageMinutes={}",
+                        "Suppressing duplicate alert stationId={} alertId={} eventCode={} senderId={} ageMinutes={}",
                         event.stationId,
+                        existing.alertId,
                         header.eventCode,
                         header.senderId,
-                        age,
+                        ageMinutes,
                     )
                 }
+
+                activeAlerts[alertKey] = existing.copy(
+                    lastSeenAt = now,
+                )
                 return
             }
         }
 
         val alertId = UUID.randomUUID().toString()
+        val expiresAt = calculateExpiresAt(
+            openedAt = now,
+            purgeTime = header.purgeTime,
+        )
+
         val record = ActiveAlertRecord(
             alertId = alertId,
             alertKey = alertKey,
@@ -145,7 +198,9 @@ class AlertOrchestrationFeature(
             locallyRelevant = true,
             openedAt = now,
             lastSeenAt = now,
+            expiresAt = expiresAt,
             state = AlertLifecycleState.OPEN,
+            expiredAt = null,
         )
         activeAlerts[alertKey] = record
 
@@ -172,6 +227,80 @@ class AlertOrchestrationFeature(
                 )
             )
         }
+
+        if (datafill.debugLogging) {
+            log.debug(
+                "Opened alert stationId={} alertId={} eventCode={} senderId={} expiresAt={}",
+                event.stationId,
+                alertId,
+                header.eventCode,
+                header.senderId,
+                expiresAt,
+            )
+        }
+    }
+
+    private suspend fun expireAlerts() {
+        val now = clock.instant()
+
+        activeAlerts.entries
+            .filter { (_, record) -> record.expiresAt <= now }
+            .forEach { (key, record) ->
+                val expiredRecord = record.copy(
+                    state = AlertLifecycleState.EXPIRED,
+                    expiredAt = now,
+                    lastSeenAt = now,
+                )
+
+                activeAlerts.remove(key)
+                expiredAlerts[record.alertId] = expiredRecord
+
+                weatherRadioEventBus.publish(
+                    AlertExpiredEvent(
+                        stationId = record.stationId,
+                        alertId = record.alertId,
+                        header = record.header,
+                        expiredAt = now.toString(),
+                        correlationId = null,
+                        causationId = null,
+                    )
+                )
+
+                if (datafill.debugLogging) {
+                    log.debug(
+                        "Expired alert stationId={} alertId={} eventCode={} senderId={} expiredAt={}",
+                        record.stationId,
+                        record.alertId,
+                        record.header.eventCode,
+                        record.header.senderId,
+                        now,
+                    )
+                }
+            }
+    }
+
+    private fun pruneExpiredAlerts() {
+        val now = clock.instant()
+        val retention = Duration.ofMinutes(datafill.retainedExpiredAlertsMinutes)
+
+        expiredAlerts.entries
+            .filter { (_, record) ->
+                val expiredAt = record.expiredAt ?: return@filter false
+                Duration.between(expiredAt, now) > retention
+            }
+            .forEach { (alertId, record) ->
+                expiredAlerts.remove(alertId)
+
+                if (datafill.debugLogging) {
+                    log.debug(
+                        "Pruned expired alert stationId={} alertId={} eventCode={} senderId={}",
+                        record.stationId,
+                        record.alertId,
+                        record.header.eventCode,
+                        record.header.senderId,
+                    )
+                }
+            }
     }
 
     private fun isLocallyRelevant(countyCodes: List<String>): Boolean {
@@ -180,5 +309,13 @@ class AlertOrchestrationFeature(
         }
         val configured = datafill.localCountyCodes.toSet()
         return countyCodes.any { it in configured }
+    }
+
+    private fun calculateExpiresAt(
+        openedAt: Instant,
+        purgeTime: String,
+    ): Instant {
+        val minutes = purgeTime.toLongOrNull() ?: 30L
+        return openedAt.plus(Duration.ofMinutes(minutes))
     }
 }

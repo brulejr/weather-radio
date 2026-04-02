@@ -66,6 +66,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionStartedEvent> { handleTranscriptionStarted(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptCreatedEvent> { handleTranscriptCreated(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFailedEvent> { handleTranscriptionFailed(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertExpiredEvent> { handleAlertExpired(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -257,6 +258,57 @@ class AlertStoreFeature(
             ),
             source = event,
         )
+    }
+
+    private suspend fun handleAlertExpired(event: AlertExpiredEvent) {
+        try {
+            val existing = repository.findByAlertId(event.alertId)
+            val updated = if (existing != null) {
+                existing.copy(
+                    state = "EXPIRED",
+                    updatedAt = clock.instant(),
+                    artifacts = existing.artifacts + StoredAlertArtifact(
+                        artifactType = "alert-expired",
+                        createdAt = clock.instant(),
+                        details = mapOf("expiredAt" to event.expiredAt),
+                    ),
+                )
+            } else {
+                StoredAlertRecord(
+                    alertId = event.alertId,
+                    stationId = event.stationId,
+                    state = "EXPIRED",
+                    header = event.header,
+                    updatedAt = clock.instant(),
+                    artifacts = listOf(
+                        StoredAlertArtifact(
+                            artifactType = "alert-expired",
+                            createdAt = clock.instant(),
+                            details = mapOf("expiredAt" to event.expiredAt),
+                        )
+                    ),
+                )
+            }
+
+            repository.upsert(updated)
+
+            weatherRadioEventBus.publish(
+                AlertStateStoredEvent(
+                    stationId = event.stationId,
+                    alertId = event.alertId,
+                    state = "EXPIRED",
+                    correlationId = event.correlationId,
+                    causationId = event.eventId,
+                )
+            )
+        } catch (ex: Exception) {
+            storeFailed(
+                event.stationId,
+                event.alertId,
+                "Failed to store alert-expired state: ${ex.message}",
+                event,
+            )
+        }
     }
 
     private suspend fun appendArtifact(

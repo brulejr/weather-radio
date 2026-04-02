@@ -55,6 +55,8 @@ application:
       - "50007"
     trigger-recording-on-open: true
     duplicate-suppression-minutes: 15
+    expiry-sweep-interval-ms: 5000
+    retained-expired-alerts-minutes: 60
     debug-logging: true
 
   audio-capture:

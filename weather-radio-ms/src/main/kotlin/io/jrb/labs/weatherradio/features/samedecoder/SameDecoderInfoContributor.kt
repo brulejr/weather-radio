@@ -22,20 +22,19 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.samedecoder
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.util.UUID
+import io.jrb.labs.commons.actuator.FeatureInfoContributor
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.SAME_DECODER
+import io.jrb.labs.weatherradio.features.radioinput.RadioInputDatafill
 
-data class SameHeaderDecodedEvent(
-    override val stationId: String,
-    val header: SameHeader,
-    val confidence: Double,
-    override val correlationId: UUID? = null,
-    override val causationId: UUID? = null,
-) : AbstractWeatherRadioEvent(
-    featureId = "same-decoder",
-    stationId = stationId,
-    correlationId = correlationId,
-    causationId = causationId,
-)
+class SameDecoderInfoContributor(
+    private val datafill: RadioInputDatafill
+) : FeatureInfoContributor {
+
+    override val key: String = SAME_DECODER.featureId
+
+    override fun info(): Map<String, Any?> = mapOf(
+        "enabled" to datafill.enabled
+    )
+}

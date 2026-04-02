@@ -22,20 +22,15 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.observability
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.util.UUID
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_OBSERVABILITY
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-data class SameHeaderDecodedEvent(
-    override val stationId: String,
-    val header: SameHeader,
-    val confidence: Double,
-    override val correlationId: UUID? = null,
-    override val causationId: UUID? = null,
-) : AbstractWeatherRadioEvent(
-    featureId = "same-decoder",
-    stationId = stationId,
-    correlationId = correlationId,
-    causationId = causationId,
+@ConfigurationProperties(prefix = CONFIG_PREFIX_OBSERVABILITY)
+data class ObservabilityDatafill(
+    val enabled: Boolean = true,
+    val logHeartbeats: Boolean = true,
+    val logAudioFrames: Boolean = false,
+    val logSameRejected: Boolean = true,
 )

@@ -38,3 +38,16 @@ application:
         county-codes:
           - "05007"
           - "50007"
+
+  same-decoder:
+    enabled: true
+    window-duration-ms: 3000
+    min-frames-per-window: 2
+    min-confidence: 0.80
+    debug-logging: false
+
+  observability:
+    enabled: true
+    log-heartbeats: true
+    log-audio-frames: false
+    log-same-rejected: true

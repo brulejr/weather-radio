@@ -24,13 +24,12 @@
 
 package io.jrb.labs.weatherradio.events
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
 import java.util.UUID
 
-data class SameHeaderDecodedEvent(
+data class SameHeaderRejectedEvent(
     override val stationId: String,
-    val header: SameHeader,
-    val confidence: Double,
+    val reason: String,
+    val confidence: Double? = null,
     override val correlationId: UUID? = null,
     override val causationId: UUID? = null,
 ) : AbstractWeatherRadioEvent(

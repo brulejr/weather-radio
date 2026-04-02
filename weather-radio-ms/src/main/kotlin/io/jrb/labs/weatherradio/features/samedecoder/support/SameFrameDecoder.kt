@@ -22,20 +22,11 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.samedecoder.support
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.util.UUID
+import io.jrb.labs.weatherradio.features.samedecoder.model.SameDecodeAttempt
+import io.jrb.labs.weatherradio.features.samedecoder.model.SameDecodeResult
 
-data class SameHeaderDecodedEvent(
-    override val stationId: String,
-    val header: SameHeader,
-    val confidence: Double,
-    override val correlationId: UUID? = null,
-    override val causationId: UUID? = null,
-) : AbstractWeatherRadioEvent(
-    featureId = "same-decoder",
-    stationId = stationId,
-    correlationId = correlationId,
-    causationId = causationId,
-)
+interface SameFrameDecoder {
+    fun decode(attempt: SameDecodeAttempt): SameDecodeResult
+}

@@ -28,7 +28,6 @@ import java.util.UUID
 
 data class SameHeaderDetectedEvent(
     override val stationId: String,
-    val detectionId: UUID = UUID.randomUUID(),
     val confidence: Double,
     val burstCount: Int,
     override val correlationId: UUID? = null,

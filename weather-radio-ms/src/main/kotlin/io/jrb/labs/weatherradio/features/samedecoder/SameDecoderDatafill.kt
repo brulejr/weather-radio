@@ -22,20 +22,29 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.events
+package io.jrb.labs.weatherradio.features.samedecoder
 
-import io.jrb.labs.weatherradio.features.samedecoder.model.SameHeader
-import java.util.UUID
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_SAME_DECODER
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
+import jakarta.validation.constraints.Min
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-data class SameHeaderDecodedEvent(
-    override val stationId: String,
-    val header: SameHeader,
-    val confidence: Double,
-    override val correlationId: UUID? = null,
-    override val causationId: UUID? = null,
-) : AbstractWeatherRadioEvent(
-    featureId = "same-decoder",
-    stationId = stationId,
-    correlationId = correlationId,
-    causationId = causationId,
-)
+@ConfigurationProperties(prefix = CONFIG_PREFIX_SAME_DECODER)
+data class SameDecoderDatafill(
+
+    val enabled: Boolean = true,
+    @field:Min(250)
+
+    val windowDurationMs: Long = 3000,
+
+    @field:Min(1)
+    val minFramesPerWindow: Int = 2,
+
+    @field:DecimalMin("0.0")
+    @field:DecimalMax("1.0")
+    val minConfidence: Double = 0.80,
+
+    val debugLogging: Boolean = false,
+
+    )

@@ -27,6 +27,9 @@ package io.jrb.labs.weatherradio.features.observability.service
 import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
 import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
 import io.jrb.labs.weatherradio.events.AlertOpenedEvent
 import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
@@ -135,6 +138,47 @@ class ObservabilityEventLoggerFeature(
                 event.stationId,
                 event.alertId,
                 event.header.eventCode,
+                event.reason,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertOpenedEvent> { event ->
+            log.info(
+                "alert-opened stationId={} alertId={} eventCode={} senderId={} counties={} locallyRelevant={}",
+                event.stationId,
+                event.alertId,
+                event.header.eventCode,
+                event.header.senderId,
+                event.header.countyCodes,
+                event.locallyRelevant,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureStartedEvent> { event ->
+            log.info(
+                "alert-audio-capture-started stationId={} alertId={} reason={}",
+                event.stationId,
+                event.alertId,
+                event.reason,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioCapturedEvent> { event ->
+            log.info(
+                "alert-audio-captured stationId={} alertId={} frameCount={} sampleRateHz={} channelCount={}",
+                event.stationId,
+                event.alertId,
+                event.capture.frameCount,
+                event.capture.sampleRateHz,
+                event.capture.channelCount,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureFailedEvent> { event ->
+            log.warn(
+                "alert-audio-capture-failed stationId={} alertId={} reason={}",
+                event.stationId,
+                event.alertId,
                 event.reason,
             )
         }

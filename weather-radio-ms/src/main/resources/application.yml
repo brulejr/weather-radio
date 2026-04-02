@@ -57,6 +57,13 @@ application:
     duplicate-suppression-minutes: 15
     debug-logging: true
 
+  audio-capture:
+    enabled: true
+    pre-roll-ms: 5000
+    post-roll-ms: 15000
+    max-concurrent-captures-per-station: 1
+    debug-logging: true
+
   observability:
     enabled: true
     log-heartbeats: true

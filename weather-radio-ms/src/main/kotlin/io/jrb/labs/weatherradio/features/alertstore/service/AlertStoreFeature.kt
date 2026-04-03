@@ -40,6 +40,8 @@ import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
 import io.jrb.labs.weatherradio.events.AlertStateStoredEvent
 import io.jrb.labs.weatherradio.events.AlertStoreFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
@@ -86,6 +88,8 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertExpiredEvent> { handleAlertExpired(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> { handleAudioFileCreated(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreationFailedEvent> { handleAudioFileCreationFailed(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreatedEvent> { handleTranscriptFileCreated(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreationFailedEvent> { handleTranscriptFileCreationFailed(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -355,6 +359,35 @@ class AlertStoreFeature(
             alertId = event.alertId,
             artifact = StoredAlertArtifact(
                 artifactType = "audio-file-failed",
+                createdAt = clock.instant(),
+                details = mapOf("reason" to event.reason),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptFileCreated(event: AlertTranscriptFileCreatedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcript-file",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "textFilePath" to event.artifact.textFilePath,
+                    "jsonFilePath" to event.artifact.jsonFilePath,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptFileCreationFailed(event: AlertTranscriptFileCreationFailedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcript-file-failed",
                 createdAt = clock.instant(),
                 details = mapOf("reason" to event.reason),
             ),

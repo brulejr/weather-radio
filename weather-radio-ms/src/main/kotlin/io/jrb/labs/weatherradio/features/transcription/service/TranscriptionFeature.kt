@@ -29,12 +29,15 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.transcription.TranscriptionDatafill
 import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
+import io.jrb.labs.weatherradio.features.transcription.port.TranscriptArtifactWriter
 import org.slf4j.LoggerFactory
 import java.time.Clock
 
@@ -43,6 +46,7 @@ class TranscriptionFeature(
     private val weatherRadioEventBus: WeatherRadioEventBus,
     private val datafill: TranscriptionDatafill,
     private val audioFileTranscriber: AudioFileTranscriber,
+    private val transcriptArtifactWriter: TranscriptArtifactWriter,
     private val clock: Clock,
 ) : ControllableService(systemEventBus) {
 
@@ -57,6 +61,8 @@ class TranscriptionFeature(
                 details = mapOf(
                     "syntheticMode" to datafill.syntheticMode,
                     "includeDebugTranscriptDetails" to datafill.includeDebugTranscriptDetails,
+                    "writeTranscriptFiles" to datafill.writeTranscriptFiles,
+                    "artifactDirectory" to datafill.artifactDirectory,
                 ),
             )
         )
@@ -109,6 +115,31 @@ class TranscriptionFeature(
                     causationId = event.eventId,
                 )
             )
+
+            if (datafill.writeTranscriptFiles) {
+                try {
+                    val artifact = transcriptArtifactWriter.writeTranscript(transcript)
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptFileCreatedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            artifact = artifact,
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                } catch (ex: Exception) {
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptFileCreationFailedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            reason = ex.message ?: "Unknown transcript file creation failure",
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                }
+            }
 
             if (datafill.debugLogging) {
                 log.debug(

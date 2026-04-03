@@ -22,26 +22,11 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.transcription
+package io.jrb.labs.weatherradio.features.transcription.port
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.transcription.model.AlertTranscriptFileArtifact
+import io.jrb.labs.weatherradio.features.transcription.model.AlertTranscriptRecord
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_TRANSCRIPTION)
-data class TranscriptionDatafill(
-
-    val enabled: Boolean = true,
-
-    val syntheticMode: Boolean = true,
-
-    val includeDebugTranscriptDetails: Boolean = false,
-
-    val writeTranscriptFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false
-
-)
+interface TranscriptArtifactWriter {
+    fun writeTranscript(transcript: AlertTranscriptRecord): AlertTranscriptFileArtifact
+}

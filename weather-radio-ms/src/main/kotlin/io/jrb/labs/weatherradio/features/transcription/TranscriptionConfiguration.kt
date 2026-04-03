@@ -24,17 +24,21 @@
 
 package io.jrb.labs.weatherradio.features.transcription
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
 import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
+import io.jrb.labs.weatherradio.features.transcription.port.TranscriptArtifactWriter
 import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionFeature
 import io.jrb.labs.weatherradio.features.transcription.support.SyntheticAudioFileTranscriber
+import io.jrb.labs.weatherradio.features.transcription.support.TextTranscriptArtifactWriter
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.nio.file.Paths
 import java.time.Clock
 
 @Configuration
@@ -57,17 +61,30 @@ class TranscriptionConfiguration {
     )
 
     @Bean
+    fun transcriptArtifactWriter(
+        datafill: TranscriptionDatafill,
+        objectMapper: ObjectMapper,
+        clock: Clock,
+    ): TranscriptArtifactWriter = TextTranscriptArtifactWriter(
+        artifactRoot = Paths.get(datafill.artifactDirectory),
+        objectMapper = objectMapper,
+        clock = clock,
+    )
+
+    @Bean
     fun transcriptionFeature(
         systemEventBus: SystemEventBus,
         weatherRadioEventBus: WeatherRadioEventBus,
         datafill: TranscriptionDatafill,
         audioFileTranscriber: AudioFileTranscriber,
+        transcriptArtifactWriter: TranscriptArtifactWriter,
         clock: Clock,
     ): TranscriptionFeature = TranscriptionFeature(
         systemEventBus = systemEventBus,
         weatherRadioEventBus = weatherRadioEventBus,
         datafill = datafill,
         audioFileTranscriber = audioFileTranscriber,
+        transcriptArtifactWriter = transcriptArtifactWriter,
         clock = clock,
     )
 
@@ -77,4 +94,5 @@ class TranscriptionConfiguration {
     ) = ApplicationRunner {
         feature.start()
     }
+
 }

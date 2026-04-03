@@ -27,7 +27,22 @@ package io.jrb.labs.weatherradio.features.alertstore.service
 import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
-import io.jrb.labs.weatherradio.events.*
+import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
+import io.jrb.labs.weatherradio.events.AlertExpiredEvent
+import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
+import io.jrb.labs.weatherradio.events.AlertOpenedEvent
+import io.jrb.labs.weatherradio.events.AlertRecordingRequestedEvent
+import io.jrb.labs.weatherradio.events.AlertStateStoredEvent
+import io.jrb.labs.weatherradio.events.AlertStoreFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
+import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
+import io.jrb.labs.weatherradio.events.WeatherRadioEvent
+import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.alertstore.AlertStoreDatafill
 import io.jrb.labs.weatherradio.features.alertstore.model.StoredAlertArtifact
 import io.jrb.labs.weatherradio.features.alertstore.model.StoredAlertRecord
@@ -346,7 +361,12 @@ class AlertStoreFeature(
                 )
             )
         } catch (ex: Exception) {
-            storeFailed(stationId, alertId, "Failed to store artifact ${artifact.artifactType}: ${ex.message}", source)
+            storeFailed(
+                stationId,
+                alertId,
+                "Failed to store artifact ${artifact.artifactType}: ${ex.message}",
+                source,
+            )
         }
     }
 
@@ -357,7 +377,12 @@ class AlertStoreFeature(
         source: WeatherRadioEvent,
     ) {
         if (datafill.debugLogging) {
-            log.warn("Alert store failure stationId={} alertId={} reason={}", stationId, alertId, reason)
+            log.warn(
+                "Alert store failure stationId={} alertId={} reason={}",
+                stationId,
+                alertId,
+                reason,
+            )
         }
 
         weatherRadioEventBus.publish(

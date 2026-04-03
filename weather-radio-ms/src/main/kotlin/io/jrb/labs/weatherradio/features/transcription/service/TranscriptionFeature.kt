@@ -27,14 +27,14 @@ package io.jrb.labs.weatherradio.features.transcription.service
 import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
-import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.transcription.TranscriptionDatafill
-import io.jrb.labs.weatherradio.features.transcription.port.AudioTranscriber
+import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
 import org.slf4j.LoggerFactory
 import java.time.Clock
 
@@ -42,7 +42,7 @@ class TranscriptionFeature(
     systemEventBus: SystemEventBus,
     private val weatherRadioEventBus: WeatherRadioEventBus,
     private val datafill: TranscriptionDatafill,
-    private val audioTranscriber: AudioTranscriber,
+    private val audioFileTranscriber: AudioFileTranscriber,
     private val clock: Clock,
 ) : ControllableService(systemEventBus) {
 
@@ -61,8 +61,8 @@ class TranscriptionFeature(
             )
         )
 
-        subscription = weatherRadioEventBus.subscribe<AlertAudioCapturedEvent> { event ->
-            handleAudioCaptured(event)
+        subscription = weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> { event ->
+            handleAudioFileCreated(event)
         }
 
         weatherRadioEventBus.send(
@@ -86,19 +86,19 @@ class TranscriptionFeature(
         )
     }
 
-    private suspend fun handleAudioCaptured(event: AlertAudioCapturedEvent) {
+    private suspend fun handleAudioFileCreated(event: AlertAudioFileCreatedEvent) {
         try {
             weatherRadioEventBus.publish(
                 AlertTranscriptionStartedEvent(
                     stationId = event.stationId,
                     alertId = event.alertId,
-                    engineName = "synthetic-audio-transcriber",
+                    engineName = "synthetic-audio-file-transcriber",
                     correlationId = event.correlationId,
                     causationId = event.eventId,
                 )
             )
 
-            val transcript = audioTranscriber.transcribe(event)
+            val transcript = audioFileTranscriber.transcribe(event)
 
             weatherRadioEventBus.publish(
                 AlertTranscriptCreatedEvent(
@@ -112,7 +112,7 @@ class TranscriptionFeature(
 
             if (datafill.debugLogging) {
                 log.debug(
-                    "Transcribed alert stationId={} alertId={} engine={} confidence={}",
+                    "Transcribed alert from file stationId={} alertId={} engine={} confidence={}",
                     event.stationId,
                     event.alertId,
                     transcript.engineName,

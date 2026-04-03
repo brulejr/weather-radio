@@ -27,9 +27,9 @@ package io.jrb.labs.weatherradio.features.transcription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import io.jrb.labs.weatherradio.features.transcription.port.AudioTranscriber
+import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
 import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionFeature
-import io.jrb.labs.weatherradio.features.transcription.support.SyntheticAudioTranscriber
+import io.jrb.labs.weatherradio.features.transcription.support.SyntheticAudioFileTranscriber
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -48,10 +48,10 @@ import java.time.Clock
 class TranscriptionConfiguration {
 
     @Bean
-    fun audioTranscriber(
+    fun audioFileTranscriber(
         datafill: TranscriptionDatafill,
         clock: Clock,
-    ): AudioTranscriber = SyntheticAudioTranscriber(
+    ): AudioFileTranscriber = SyntheticAudioFileTranscriber(
         datafill = datafill,
         clock = clock,
     )
@@ -61,13 +61,13 @@ class TranscriptionConfiguration {
         systemEventBus: SystemEventBus,
         weatherRadioEventBus: WeatherRadioEventBus,
         datafill: TranscriptionDatafill,
-        audioTranscriber: AudioTranscriber,
+        audioFileTranscriber: AudioFileTranscriber,
         clock: Clock,
     ): TranscriptionFeature = TranscriptionFeature(
         systemEventBus = systemEventBus,
         weatherRadioEventBus = weatherRadioEventBus,
         datafill = datafill,
-        audioTranscriber = audioTranscriber,
+        audioFileTranscriber = audioFileTranscriber,
         clock = clock,
     )
 
@@ -77,5 +77,4 @@ class TranscriptionConfiguration {
     ) = ApplicationRunner {
         feature.start()
     }
-
 }

@@ -27,12 +27,15 @@ package io.jrb.labs.weatherradio.features.audiocapture
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_AUDIO_CAPTURE
+import io.jrb.labs.weatherradio.features.audiocapture.port.AudioArtifactWriter
 import io.jrb.labs.weatherradio.features.audiocapture.service.AudioCaptureFeature
+import io.jrb.labs.weatherradio.features.audiocapture.support.WavAudioArtifactWriter
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.nio.file.Paths
 import java.time.Clock
 
 @Configuration
@@ -46,15 +49,26 @@ import java.time.Clock
 class AudioCaptureConfiguration {
 
     @Bean
+    fun audioArtifactWriter(
+        datafill: AudioCaptureDatafill,
+        clock: Clock,
+    ): AudioArtifactWriter = WavAudioArtifactWriter(
+        artifactRoot = Paths.get(datafill.artifactDirectory),
+        clock = clock,
+    )
+
+    @Bean
     fun audioCaptureFeature(
         systemEventBus: SystemEventBus,
         weatherRadioEventBus: WeatherRadioEventBus,
         datafill: AudioCaptureDatafill,
+        audioArtifactWriter: AudioArtifactWriter,
         clock: Clock,
     ): AudioCaptureFeature = AudioCaptureFeature(
         systemEventBus = systemEventBus,
         weatherRadioEventBus = weatherRadioEventBus,
         datafill = datafill,
+        audioArtifactWriter = audioArtifactWriter,
         clock = clock,
     )
 

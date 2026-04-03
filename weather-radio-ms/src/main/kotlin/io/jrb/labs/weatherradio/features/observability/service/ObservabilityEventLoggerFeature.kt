@@ -31,6 +31,8 @@ import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertExpiredEvent
 import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
 import io.jrb.labs.weatherradio.events.AlertOpenedEvent
@@ -242,6 +244,25 @@ class ObservabilityEventLoggerFeature(
                 event.header.eventCode,
                 event.header.senderId,
                 event.expiredAt,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> { event ->
+            log.info(
+                "alert-audio-file-created stationId={} alertId={} filePath={} format={}",
+                event.stationId,
+                event.alertId,
+                event.artifact.filePath,
+                event.artifact.format,
+            )
+        }
+
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreationFailedEvent> { event ->
+            log.warn(
+                "alert-audio-file-creation-failed stationId={} alertId={} reason={}",
+                event.stationId,
+                event.alertId,
+                event.reason,
             )
         }
 

@@ -22,32 +22,21 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.audiocapture
+package io.jrb.labs.weatherradio.events
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_AUDIO_CAPTURE
-import jakarta.validation.constraints.Min
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.audiocapture.model.AlertAudioFileArtifact
+import java.util.UUID
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_AUDIO_CAPTURE)
-data class AudioCaptureDatafill(
-
-    val enabled: Boolean = true,
-
-    @field:Min(0)
-    val preRollMs: Long = 5000,
-
-    @field:Min(1000)
-    val postRollMs: Long = 15000,
-
-    @field:Min(1)
-    val maxConcurrentCapturesPerStation: Int = 1,
-
-    val writeWavFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false
-
+data class AlertAudioFileCreatedEvent(
+    override val stationId: String,
+    override val alertId: String,
+    val artifact: AlertAudioFileArtifact,
+    override val correlationId: UUID? = null,
+    override val causationId: UUID? = null,
+) : AbstractWeatherRadioEvent(
+    featureId = "audio-capture",
+    stationId = stationId,
+    alertId = alertId,
+    correlationId = correlationId,
+    causationId = causationId,
 )

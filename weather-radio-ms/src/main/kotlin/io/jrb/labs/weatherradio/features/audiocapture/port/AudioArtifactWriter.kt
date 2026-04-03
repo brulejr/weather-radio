@@ -22,32 +22,11 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.audiocapture
+package io.jrb.labs.weatherradio.features.audiocapture.port
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_AUDIO_CAPTURE
-import jakarta.validation.constraints.Min
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.audiocapture.model.AlertAudioCaptureRecord
+import io.jrb.labs.weatherradio.features.audiocapture.model.AlertAudioFileArtifact
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_AUDIO_CAPTURE)
-data class AudioCaptureDatafill(
-
-    val enabled: Boolean = true,
-
-    @field:Min(0)
-    val preRollMs: Long = 5000,
-
-    @field:Min(1000)
-    val postRollMs: Long = 15000,
-
-    @field:Min(1)
-    val maxConcurrentCapturesPerStation: Int = 1,
-
-    val writeWavFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false
-
-)
+interface AudioArtifactWriter {
+    fun writeCapture(capture: AlertAudioCaptureRecord): AlertAudioFileArtifact
+}

@@ -31,6 +31,8 @@ import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertExpiredEvent
 import io.jrb.labs.weatherradio.events.AlertIgnoredEvent
 import io.jrb.labs.weatherradio.events.AlertOpenedEvent
@@ -82,6 +84,8 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptCreatedEvent> { handleTranscriptCreated(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFailedEvent> { handleTranscriptionFailed(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertExpiredEvent> { handleAlertExpired(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> { handleAudioFileCreated(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreationFailedEvent> { handleAudioFileCreationFailed(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -324,6 +328,38 @@ class AlertStoreFeature(
                 event,
             )
         }
+    }
+
+    private suspend fun handleAudioFileCreated(event: AlertAudioFileCreatedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "audio-file",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "filePath" to event.artifact.filePath,
+                    "format" to event.artifact.format,
+                    "sampleRateHz" to event.artifact.sampleRateHz,
+                    "channelCount" to event.artifact.channelCount,
+                    "frameCount" to event.artifact.frameCount,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleAudioFileCreationFailed(event: AlertAudioFileCreationFailedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "audio-file-failed",
+                createdAt = clock.instant(),
+                details = mapOf("reason" to event.reason),
+            ),
+            source = event,
+        )
     }
 
     private suspend fun appendArtifact(

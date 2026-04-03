@@ -11,4 +11,5 @@ out/
 .vscode/
 
 ### PCM files
+data/
 var/

@@ -64,6 +64,8 @@ application:
     pre-roll-ms: 5000
     post-roll-ms: 15000
     max-concurrent-captures-per-station: 1
+    write-wav-files: true
+    artifact-directory: ./data/artifacts
     debug-logging: true
 
   alert-store:

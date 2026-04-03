@@ -27,5 +27,9 @@ package io.jrb.labs.weatherradio.features.alertstore.api
 data class AlertArtifactResponse(
     val artifactType: String,
     val createdAt: String,
+    val exists: Boolean,
+    val contentType: String? = null,
+    val sizeBytes: Long? = null,
+    val downloadUrl: String? = null,
     val details: Map<String, Any?> = emptyMap(),
 )

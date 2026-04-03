@@ -24,98 +24,75 @@
 
 package io.jrb.labs.weatherradio.features.alertstore.api
 
-import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactLookupService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.Resource
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.nio.file.Files
-import java.nio.file.Path
 
 @RestController
 @RequestMapping("/api/alerts/{alertId}/artifacts")
+@ConditionalOnProperty(
+    prefix = CONFIG_PREFIX_ALERT_STORE,
+    name = ["enabled"],
+    havingValue = "true",
+    matchIfMissing = true
+)
 class AlertArtifactController(
-    private val repository: AlertStoreRepository,
+    private val lookupService: AlertArtifactLookupService,
 ) {
 
     @GetMapping
     fun listArtifacts(
         @PathVariable alertId: String,
-    ): ResponseEntity<List<Map<String, Any?>>> {
-        val record = repository.findByAlertId(alertId)
+    ): ResponseEntity<List<AlertArtifactResponse>> {
+        val artifacts = lookupService.listArtifacts(alertId)
             ?: return ResponseEntity.notFound().build()
-
-        val body = record.artifacts.map {
-            mapOf(
-                "artifactType" to it.artifactType,
-                "createdAt" to it.createdAt.toString(),
-                "details" to it.details,
-            )
-        }
-
-        return ResponseEntity.ok(body)
+        return ResponseEntity.ok(artifacts)
     }
 
     @GetMapping("/audio")
     fun getAudioArtifact(
         @PathVariable alertId: String,
     ): ResponseEntity<Resource> =
-        serveArtifactFile(
-            alertId = alertId,
-            artifactType = "audio-file",
-            detailKey = "filePath",
-            contentType = MediaType.parseMediaType("audio/wav"),
-            downloadName = "audio.wav",
-        )
+        serve(lookupService.resolveAudio(alertId))
 
-    @GetMapping("/transcript")
-    fun getTranscriptArtifact(
+    @GetMapping("/transcript.txt")
+    fun getTranscriptTextArtifact(
         @PathVariable alertId: String,
     ): ResponseEntity<Resource> =
-        serveArtifactFile(
-            alertId = alertId,
-            artifactType = "transcript-file",
-            detailKey = "textFilePath",
-            contentType = MediaType.TEXT_PLAIN,
-            downloadName = "transcript.txt",
-        )
+        serve(lookupService.resolveTranscriptText(alertId))
 
-    private fun serveArtifactFile(
-        alertId: String,
-        artifactType: String,
-        detailKey: String,
-        contentType: MediaType,
-        downloadName: String,
+    @GetMapping("/transcript.json")
+    fun getTranscriptJsonArtifact(
+        @PathVariable alertId: String,
+    ): ResponseEntity<Resource> =
+        serve(lookupService.resolveTranscriptJson(alertId))
+
+    @GetMapping("/transcript")
+    fun getTranscriptArtifactAlias(
+        @PathVariable alertId: String,
+    ): ResponseEntity<Resource> =
+        serve(lookupService.resolveTranscriptText(alertId))
+
+    private fun serve(
+        resolved: io.jrb.labs.weatherradio.features.alertstore.service.ResolvedArtifactFile?
     ): ResponseEntity<Resource> {
-        val record = repository.findByAlertId(alertId)
-            ?: return ResponseEntity.notFound().build()
-
-        val pathValue = record.artifacts
-            .lastOrNull { it.artifactType == artifactType }
-            ?.details
-            ?.get(detailKey) as? String
-            ?: return ResponseEntity.notFound().build()
-
-        val path = Path.of(pathValue)
-        if (!Files.exists(path)) {
-            return ResponseEntity.notFound().build()
-        }
-
-        val resource = FileSystemResource(path)
-
+        val file = resolved ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok()
-            .contentType(contentType)
+            .contentType(file.contentType)
             .header(
                 HttpHeaders.CONTENT_DISPOSITION,
-                ContentDisposition.inline().filename(downloadName).build().toString()
+                ContentDisposition.inline().filename(file.downloadName).build().toString()
             )
-            .body(resource)
+            .body(FileSystemResource(file.path))
     }
 
 }

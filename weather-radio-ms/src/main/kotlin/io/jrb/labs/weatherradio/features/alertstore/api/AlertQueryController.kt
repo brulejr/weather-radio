@@ -27,6 +27,7 @@ package io.jrb.labs.weatherradio.features.alertstore.api
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
 import io.jrb.labs.weatherradio.features.alertstore.model.StoredAlertRecord
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactLookupService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -40,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController
 @ConditionalOnProperty(prefix = CONFIG_PREFIX_ALERT_STORE, name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class AlertQueryController(
     private val repository: AlertStoreRepository,
+    private val artifactLookupService: AlertArtifactLookupService
 ) {
 
     @GetMapping
@@ -95,13 +97,7 @@ class AlertQueryController(
             locallyRelevant = locallyRelevant,
             openedAt = openedAt?.toString(),
             updatedAt = updatedAt.toString(),
-            artifacts = artifacts.map { artifact ->
-                AlertArtifactResponse(
-                    artifactType = artifact.artifactType,
-                    createdAt = artifact.createdAt.toString(),
-                    details = artifact.details,
-                )
-            },
+            artifacts = artifactLookupService.listArtifacts(alertId).orEmpty(),
         )
 
 }

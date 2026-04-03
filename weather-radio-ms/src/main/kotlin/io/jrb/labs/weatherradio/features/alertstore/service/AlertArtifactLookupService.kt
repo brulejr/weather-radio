@@ -22,16 +22,21 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore
+package io.jrb.labs.weatherradio.features.alertstore.service
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.alertstore.api.AlertArtifactResponse
+import org.springframework.http.MediaType
+import java.nio.file.Path
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_ALERT_STORE)
-data class AlertStoreDatafill(
-    val enabled: Boolean = true,
-    val storeAudioFramesInMemory: Boolean = true,
-    val allowedRoots: List<String> = emptyList(),
-    val exposeTranscriptAlias: Boolean = true,
-    val debugLogging: Boolean = false
+interface AlertArtifactLookupService {
+    fun listArtifacts(alertId: String): List<AlertArtifactResponse>?
+    fun resolveAudio(alertId: String): ResolvedArtifactFile?
+    fun resolveTranscriptText(alertId: String): ResolvedArtifactFile?
+    fun resolveTranscriptJson(alertId: String): ResolvedArtifactFile?
+}
+
+data class ResolvedArtifactFile(
+    val path: Path,
+    val contentType: MediaType,
+    val downloadName: String,
 )

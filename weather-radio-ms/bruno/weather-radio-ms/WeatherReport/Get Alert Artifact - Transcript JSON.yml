@@ -1,0 +1,19 @@
+info:
+  name: Get Alert Artifact - Transcript JSON
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{weather_radio_ms_url}}/api/alerts/:alertId/artifacts/transcript.json"
+  params:
+    - name: alertId
+      value: edc046bf-8e4c-4a09-9be9-4e7ab9edbd62
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

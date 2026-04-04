@@ -1,0 +1,15 @@
+info:
+  name: Prune Events
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{weather_radio_ms_url}}/api/admin/alerts/artifacts/prune"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

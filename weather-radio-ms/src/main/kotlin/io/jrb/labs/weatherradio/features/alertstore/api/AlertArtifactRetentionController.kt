@@ -22,21 +22,30 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore
+package io.jrb.labs.weatherradio.features.alertstore.api
 
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactRetentionService
+import io.jrb.labs.weatherradio.features.alertstore.service.ArtifactPruneResult
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_ALERT_STORE)
-data class AlertStoreDatafill(
-    val enabled: Boolean = true,
-    val storeAudioFramesInMemory: Boolean = true,
-    val allowedRoots: List<String> = emptyList(),
-    val exposeTranscriptAlias: Boolean = true,
-    val debugLogging: Boolean = false,
-    val artifactPruningEnabled: Boolean = true,
-    val artifactPruningDryRun: Boolean = true,
-    val pruneExpiredAlertsAfterHours: Long = 168,
-    val pruneIgnoredAlertsAfterHours: Long = 24,
-    val artifactPruningScanLimit: Int = 250,
+@RestController
+@RequestMapping("/api/admin/alerts/artifacts")
+@ConditionalOnProperty(
+    prefix = CONFIG_PREFIX_ALERT_STORE,
+    name = ["enabled"],
+    havingValue = "true",
+    matchIfMissing = true
 )
+class AlertArtifactRetentionController(
+    private val retentionService: AlertArtifactRetentionService,
+) {
+
+    @PostMapping("/prune")
+    suspend fun prune(): ResponseEntity<ArtifactPruneResult> =
+        ResponseEntity.ok(retentionService.pruneArtifacts())
+}

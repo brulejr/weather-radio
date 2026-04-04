@@ -28,8 +28,10 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertStoreFeature
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactLookupService
+import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryAlertStoreRepository
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -78,5 +80,12 @@ class AlertStoreConfiguration {
         datafill: AlertStoreDatafill,
         repository: AlertStoreRepository,
     ) = DefaultAlertArtifactLookupService(datafill, repository)
+
+    @Bean
+    fun alertArtifactRetentionService(
+        datafill: AlertStoreDatafill,
+        repository: AlertStoreRepository,
+        clock: Clock,
+    ): AlertArtifactRetentionService = DefaultAlertArtifactRetentionService(datafill, repository, clock)
 
 }

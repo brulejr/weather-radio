@@ -22,21 +22,18 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore
+package io.jrb.labs.weatherradio.features.alertstore.service
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
-import org.springframework.boot.context.properties.ConfigurationProperties
+import java.time.Instant
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_ALERT_STORE)
-data class AlertStoreDatafill(
-    val enabled: Boolean = true,
-    val storeAudioFramesInMemory: Boolean = true,
-    val allowedRoots: List<String> = emptyList(),
-    val exposeTranscriptAlias: Boolean = true,
-    val debugLogging: Boolean = false,
-    val artifactPruningEnabled: Boolean = true,
-    val artifactPruningDryRun: Boolean = true,
-    val pruneExpiredAlertsAfterHours: Long = 168,
-    val pruneIgnoredAlertsAfterHours: Long = 24,
-    val artifactPruningScanLimit: Int = 250,
+interface AlertArtifactRetentionService {
+    suspend fun pruneArtifacts(now: Instant = Instant.now()): ArtifactPruneResult
+}
+
+data class ArtifactPruneResult(
+    val alertsScanned: Int,
+    val alertsEligible: Int,
+    val alertsPruned: Int,
+    val artifactsRemoved: Int,
+    val dryRun: Boolean,
 )

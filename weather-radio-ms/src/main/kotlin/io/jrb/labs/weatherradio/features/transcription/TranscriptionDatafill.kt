@@ -54,6 +54,16 @@ data class TranscriptionDatafill(
 
     val defaultLanguage: String = "en",
 
-    val allowPoorQualityTranscription: Boolean = true
+    val allowPoorQualityTranscription: Boolean = true,
+
+    val enableFallbackTranscription: Boolean = true,
+
+    val fallbackWhenPoorQuality: Boolean = true,
+
+    val fallbackWhenPrimaryFails: Boolean = true,
+
+    val primaryEngineName: String = "synthetic-audio-file-transcriber",
+
+    val fallbackEngineName: String = "synthetic-audio-file-transcriber-fallback"
 
 )

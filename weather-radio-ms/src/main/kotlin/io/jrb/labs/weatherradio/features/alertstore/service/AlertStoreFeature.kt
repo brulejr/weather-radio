@@ -45,6 +45,7 @@ import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionFallbackSelectedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
@@ -96,6 +97,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionSkippedEvent> { handleTranscriptionSkipped(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureSkippedEvent> { handleAudioCaptureSkipped(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCapturePoorQualityEvent> { handleAudioCapturePoorQuality(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFallbackSelectedEvent> { handleTranscriptionFallbackSelected(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -541,6 +543,23 @@ class AlertStoreFeature(
                 source,
             )
         }
+    }
+
+    private suspend fun handleTranscriptionFallbackSelected(event: AlertTranscriptionFallbackSelectedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcription-fallback-selected",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "reason" to event.reason,
+                    "primaryEngineName" to event.primaryEngineName,
+                    "fallbackEngineName" to event.fallbackEngineName,
+                ),
+            ),
+            source = event,
+        )
     }
 
     private suspend fun storeFailed(

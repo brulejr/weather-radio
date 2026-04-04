@@ -35,6 +35,7 @@ import java.nio.file.Path
 class SyntheticAudioFileTranscriber(
     private val datafill: TranscriptionDatafill,
     private val clock: Clock,
+    private val engineName: String = "synthetic-audio-file-transcriber"
 ) : AudioFileTranscriber {
 
     override fun transcribe(event: AlertAudioFileCreatedEvent): AlertTranscriptRecord {
@@ -74,7 +75,7 @@ class SyntheticAudioFileTranscriber(
             transcriptText = text,
             confidence = 0.90,
             createdAt = clock.instant(),
-            engineName = "synthetic-audio-file-transcriber",
+            engineName = engineName,
             details = details,
         )
     }

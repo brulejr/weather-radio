@@ -32,6 +32,7 @@ import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionFallbackSelectedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
@@ -42,6 +43,7 @@ import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
 import io.jrb.labs.weatherradio.features.transcription.port.NormalizedTranscript
 import io.jrb.labs.weatherradio.features.transcription.port.TranscriptArtifactWriter
 import io.jrb.labs.weatherradio.features.transcription.port.TranscriptNormalizer
+import io.jrb.labs.weatherradio.features.transcription.port.TranscriptionDecisionPolicy
 import org.slf4j.LoggerFactory
 import java.time.Clock
 
@@ -50,8 +52,10 @@ class TranscriptionFeature(
     private val weatherRadioEventBus: WeatherRadioEventBus,
     private val datafill: TranscriptionDatafill,
     private val audioFileTranscriber: AudioFileTranscriber,
+    private val fallbackAudioFileTranscriber: AudioFileTranscriber,
     private val transcriptArtifactWriter: TranscriptArtifactWriter,
     private val transcriptNormalizer: TranscriptNormalizer,
+    private val transcriptionDecisionPolicy: TranscriptionDecisionPolicy,
     private val clock: Clock,
 ) : ControllableService(systemEventBus) {
 
@@ -68,6 +72,11 @@ class TranscriptionFeature(
                     "includeDebugTranscriptDetails" to datafill.includeDebugTranscriptDetails,
                     "writeTranscriptFiles" to datafill.writeTranscriptFiles,
                     "artifactDirectory" to datafill.artifactDirectory,
+                    "enableFallbackTranscription" to datafill.enableFallbackTranscription,
+                    "fallbackWhenPoorQuality" to datafill.fallbackWhenPoorQuality,
+                    "fallbackWhenPrimaryFails" to datafill.fallbackWhenPrimaryFails,
+                    "primaryEngineName" to datafill.primaryEngineName,
+                    "fallbackEngineName" to datafill.fallbackEngineName,
                 ),
             )
         )
@@ -99,12 +108,14 @@ class TranscriptionFeature(
 
     private suspend fun handleAudioFileCreated(event: AlertAudioFileCreatedEvent) {
         try {
-            if (!event.artifact.acceptableForTranscription && !datafill.allowPoorQualityTranscription) {
+            val decision = transcriptionDecisionPolicy.decide(event)
+
+            if (!decision.shouldTranscribe) {
                 weatherRadioEventBus.publish(
                     AlertTranscriptionSkippedEvent(
                         stationId = event.stationId,
                         alertId = event.alertId,
-                        reason = "Source audio quality classified as ${event.artifact.qualityClassification}",
+                        reason = decision.reason,
                         correlationId = event.correlationId,
                         causationId = event.eventId,
                     )
@@ -112,17 +123,62 @@ class TranscriptionFeature(
                 return
             }
 
+            val selectedTranscriber = if (decision.useFallback) {
+                weatherRadioEventBus.publish(
+                    AlertTranscriptionFallbackSelectedEvent(
+                        stationId = event.stationId,
+                        alertId = event.alertId,
+                        reason = decision.reason,
+                        primaryEngineName = datafill.primaryEngineName,
+                        fallbackEngineName = datafill.fallbackEngineName,
+                        correlationId = event.correlationId,
+                        causationId = event.eventId,
+                    )
+                )
+                fallbackAudioFileTranscriber
+            } else {
+                audioFileTranscriber
+            }
+
+            val selectedEngineName = if (decision.useFallback) {
+                datafill.fallbackEngineName
+            } else {
+                datafill.primaryEngineName
+            }
+
             weatherRadioEventBus.publish(
                 AlertTranscriptionStartedEvent(
                     stationId = event.stationId,
                     alertId = event.alertId,
-                    engineName = "synthetic-audio-file-transcriber",
+                    engineName = selectedEngineName,
                     correlationId = event.correlationId,
                     causationId = event.eventId,
                 )
             )
 
-            val rawTranscript = audioFileTranscriber.transcribe(event)
+            val rawTranscript = try {
+                selectedTranscriber.transcribe(event)
+            } catch (ex: Exception) {
+                if (!decision.useFallback &&
+                    datafill.enableFallbackTranscription &&
+                    datafill.fallbackWhenPrimaryFails
+                ) {
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptionFallbackSelectedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            reason = "Primary transcription failed: ${ex.message ?: "Unknown error"}",
+                            primaryEngineName = datafill.primaryEngineName,
+                            fallbackEngineName = datafill.fallbackEngineName,
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                    fallbackAudioFileTranscriber.transcribe(event)
+                } else {
+                    throw ex
+                }
+            }
 
             val normalized = if (datafill.normalizeTranscriptText) {
                 transcriptNormalizer.normalize(rawTranscript.transcriptText)

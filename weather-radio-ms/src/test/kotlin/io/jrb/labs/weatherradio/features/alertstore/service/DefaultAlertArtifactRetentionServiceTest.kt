@@ -235,5 +235,4 @@ class DefaultAlertArtifactRetentionService(
         val missing: Int,
         val rejected: Int,
     )
-
 }

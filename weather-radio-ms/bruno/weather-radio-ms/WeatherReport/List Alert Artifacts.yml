@@ -8,7 +8,7 @@ http:
   url: "{{weather_radio_ms_url}}/api/alerts/:alertId/artifacts"
   params:
     - name: alertId
-      value: fbb79138-e13e-4a3d-956c-5828945d16a8
+      value: 8ed13fea-fce8-495e-ae5d-2789d2578141
       type: path
   auth: inherit
 

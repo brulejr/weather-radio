@@ -35,5 +35,8 @@ data class ArtifactPruneResult(
     val alertsEligible: Int,
     val alertsPruned: Int,
     val artifactsRemoved: Int,
+    val filesDeleted: Int,
+    val filesMissing: Int,
+    val filesRejected: Int,
     val dryRun: Boolean,
 )

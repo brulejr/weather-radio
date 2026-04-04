@@ -72,6 +72,11 @@ application:
     enabled: true
     store-audio-frames-in-memory: false
     debug-logging: true
+    artifact-pruning-enabled: true
+    artifact-pruning-dry-run: false
+    delete-artifact-files: true
+    allowed-roots:
+      - /path/to/weather-radio/artifacts
 
   transcription:
     enabled: true

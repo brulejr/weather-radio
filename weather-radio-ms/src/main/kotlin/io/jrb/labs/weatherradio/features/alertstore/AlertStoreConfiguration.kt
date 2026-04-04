@@ -39,9 +39,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.scheduling.annotation.EnableScheduling
 import java.time.Clock
 
 @Configuration
+@EnableScheduling
 @ConfigurationPropertiesScan(basePackages = ["io.jrb.labs.weatherradio.features.alertstore"])
 @ConditionalOnProperty(
     prefix = CONFIG_PREFIX_ALERT_STORE,
@@ -90,6 +92,7 @@ class AlertStoreConfiguration {
     ): AlertArtifactRetentionService = DefaultAlertArtifactRetentionService(datafill, repository, clock)
 
     @Bean
+    @ConditionalOnProperty(prefix = CONFIG_PREFIX_ALERT_STORE, name = ["artifact-pruning-scheduler-enabled"], havingValue = "true")
     fun alertArtifactPruningScheduler(
         datafill: AlertStoreDatafill,
         retentionService: AlertArtifactRetentionService,

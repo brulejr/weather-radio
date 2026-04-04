@@ -36,4 +36,8 @@ data class AlertAudioCaptureRecord(
     val sampleRateHz: Int,
     val channelCount: Int,
     val frames: List<AudioFrame>,
+    val captureReason: String? = null,
+    val preRollFrameCount: Int = 0,
+    val durationMillis: Long = 0,
+    val wasPartial: Boolean = false,
 )

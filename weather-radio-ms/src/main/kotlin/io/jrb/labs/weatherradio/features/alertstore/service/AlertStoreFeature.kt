@@ -29,6 +29,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
@@ -92,6 +93,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreatedEvent> { handleTranscriptFileCreated(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreationFailedEvent> { handleTranscriptFileCreationFailed(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionSkippedEvent> { handleTranscriptionSkipped(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureSkippedEvent> { handleAudioCaptureSkipped(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -210,6 +212,10 @@ class AlertStoreFeature(
             "channelCount" to event.capture.channelCount,
             "startedAt" to event.capture.startedAt.toString(),
             "completedAt" to event.capture.completedAt.toString(),
+            "durationMillis" to event.capture.durationMillis,
+            "captureReason" to event.capture.captureReason,
+            "preRollFrameCount" to event.capture.preRollFrameCount,
+            "wasPartial" to event.capture.wasPartial,
         )
 
         if (datafill.storeAudioFramesInMemory) {
@@ -355,7 +361,14 @@ class AlertStoreFeature(
                     "sampleRateHz" to event.artifact.sampleRateHz,
                     "channelCount" to event.artifact.channelCount,
                     "frameCount" to event.artifact.frameCount,
-                ),
+                    "artifactCreatedAt" to event.artifact.createdAt.toString(),
+                    "startedAt" to event.artifact.startedAt.toString(),
+                    "completedAt" to event.artifact.completedAt.toString(),
+                    "durationMillis" to event.artifact.durationMillis,
+                    "byteLength" to event.artifact.byteLength,
+                    "captureReason" to event.artifact.captureReason,
+                    "wasPartial" to event.artifact.wasPartial,
+                )
             ),
             source = event,
         )
@@ -410,6 +423,21 @@ class AlertStoreFeature(
             alertId = event.alertId,
             artifact = StoredAlertArtifact(
                 artifactType = "transcription-skipped",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "reason" to event.reason,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleAudioCaptureSkipped(event: AlertAudioCaptureSkippedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "audio-capture-skipped",
                 createdAt = clock.instant(),
                 details = mapOf(
                     "reason" to event.reason,

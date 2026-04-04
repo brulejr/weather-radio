@@ -145,6 +145,12 @@ class TranscriptionFeature(
                     "normalizedTextLength" to finalText.length,
                     "wasNormalized" to normalized.wasChanged,
                     "rawTextPreserved" to datafill.preserveRawTranscriptText,
+                    "sourceAudioFilePath" to event.artifact.filePath,
+                    "sourceAudioFormat" to event.artifact.format,
+                    "sourceAudioSampleRateHz" to event.artifact.sampleRateHz,
+                    "sourceAudioChannelCount" to event.artifact.channelCount,
+                    "sourceAudioFrameCount" to event.artifact.frameCount,
+                    "sourceAudioCreatedAt" to event.artifact.createdAt.toString()
                 )
             )
 

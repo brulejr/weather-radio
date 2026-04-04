@@ -35,4 +35,10 @@ data class AlertAudioFileArtifact(
     val channelCount: Int,
     val frameCount: Int,
     val createdAt: Instant,
+    val startedAt: Instant,
+    val completedAt: Instant,
+    val durationMillis: Long,
+    val byteLength: Long,
+    val captureReason: String? = null,
+    val wasPartial: Boolean = false,
 )

@@ -29,6 +29,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.domain.radio.AudioFrame
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCaptureSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
@@ -43,6 +44,7 @@ import io.jrb.labs.weatherradio.features.audiocapture.port.AudioArtifactWriter
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -127,6 +129,17 @@ class AudioCaptureFeature(
 
     private suspend fun handleRecordingRequested(event: AlertRecordingRequestedEvent) {
         if (captureMetadataByAlertId.containsKey(event.alertId)) {
+            if (datafill.emitSkippedCaptureEvents) {
+                weatherRadioEventBus.publish(
+                    AlertAudioCaptureSkippedEvent(
+                        stationId = event.stationId,
+                        alertId = event.alertId,
+                        reason = "Capture already active for alert",
+                        correlationId = event.correlationId,
+                        causationId = event.eventId,
+                    )
+                )
+            }
             return
         }
 
@@ -154,6 +167,8 @@ class AudioCaptureFeature(
             alertId = event.alertId,
             stationId = event.stationId,
             startedAt = clock.instant(),
+            reason = event.reason,
+            preRollFrameCount = preRollFrames.size,
             correlationId = event.correlationId,
             causationId = event.eventId,
         )
@@ -196,15 +211,22 @@ class AudioCaptureFeature(
         }
 
         val firstFrame = frames.first()
+        val completedAt = clock.instant()
+
+        val wasPartial = frames.size < datafill.minimumCapturedFrames
         val record = AlertAudioCaptureRecord(
             alertId = metadata.alertId,
             stationId = metadata.stationId,
             startedAt = metadata.startedAt,
-            completedAt = clock.instant(),
+            completedAt = completedAt,
             frameCount = frames.size,
             sampleRateHz = firstFrame.sampleRateHz,
             channelCount = firstFrame.channelCount,
             frames = frames,
+            captureReason = metadata.reason,
+            preRollFrameCount = metadata.preRollFrameCount,
+            durationMillis = Duration.between(metadata.startedAt, completedAt).toMillis(),
+            wasPartial = wasPartial,
         )
 
         weatherRadioEventBus.publish(
@@ -218,28 +240,35 @@ class AudioCaptureFeature(
         )
 
         if (datafill.writeWavFiles) {
-            try {
-                val artifact = audioArtifactWriter.writeCapture(record)
-                weatherRadioEventBus.publish(
-                    AlertAudioFileCreatedEvent(
-                        stationId = metadata.stationId,
-                        alertId = metadata.alertId,
-                        artifact = artifact,
-                        correlationId = metadata.correlationId,
-                        causationId = metadata.causationId,
+            var lastError: Exception? = null
+            repeat(datafill.audioFileWriteAttempts) {
+                try {
+                    val artifact = audioArtifactWriter.writeCapture(record)
+                    weatherRadioEventBus.publish(
+                        AlertAudioFileCreatedEvent(
+                            stationId = metadata.stationId,
+                            alertId = metadata.alertId,
+                            artifact = artifact,
+                            correlationId = metadata.correlationId,
+                            causationId = metadata.causationId,
+                        )
                     )
-                )
-            } catch (ex: Exception) {
-                weatherRadioEventBus.publish(
-                    AlertAudioFileCreationFailedEvent(
-                        stationId = metadata.stationId,
-                        alertId = metadata.alertId,
-                        reason = ex.message ?: "Unknown audio file creation failure",
-                        correlationId = metadata.correlationId,
-                        causationId = metadata.causationId,
-                    )
-                )
+                    lastError = null
+                    return
+                } catch (ex: Exception) {
+                    lastError = ex
+                }
             }
+
+            weatherRadioEventBus.publish(
+                AlertAudioFileCreationFailedEvent(
+                    stationId = metadata.stationId,
+                    alertId = metadata.alertId,
+                    reason = lastError?.message ?: "Unknown audio file creation failure",
+                    correlationId = metadata.correlationId,
+                    causationId = metadata.causationId,
+                )
+            )
         }
 
         if (datafill.debugLogging) {
@@ -274,7 +303,9 @@ class AudioCaptureFeature(
     private data class CaptureMetadata(
         val alertId: String,
         val stationId: String,
-        val startedAt: java.time.Instant,
+        val startedAt: Instant,
+        val reason: String,
+        val preRollFrameCount: Int,
         val correlationId: UUID?,
         val causationId: UUID?,
     )

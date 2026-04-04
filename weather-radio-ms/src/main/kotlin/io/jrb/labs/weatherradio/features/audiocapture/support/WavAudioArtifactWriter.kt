@@ -62,6 +62,12 @@ class WavAudioArtifactWriter(
             channelCount = capture.channelCount,
             frameCount = capture.frameCount,
             createdAt = clock.instant(),
+            startedAt = capture.startedAt,
+            completedAt = capture.completedAt,
+            durationMillis = capture.durationMillis,
+            byteLength = Files.size(outputPath),
+            captureReason = capture.captureReason,
+            wasPartial = capture.wasPartial,
         )
     }
 

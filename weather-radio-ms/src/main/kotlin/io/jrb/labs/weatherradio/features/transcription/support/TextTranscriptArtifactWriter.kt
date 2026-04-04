@@ -55,6 +55,12 @@ class TextTranscriptArtifactWriter(
             "confidence" to transcript.confidence,
             "createdAt" to transcript.createdAt.toString(),
             "engineName" to transcript.engineName,
+            "language" to transcript.details["language"],
+            "rawTextLength" to transcript.details["rawTextLength"],
+            "normalizedTextLength" to transcript.details["normalizedTextLength"],
+            "wasNormalized" to transcript.details["wasNormalized"],
+            "rawTextPreserved" to transcript.details["rawTextPreserved"],
+            "rawTranscriptText" to transcript.details["rawTranscriptText"],
             "details" to transcript.details,
         )
         jsonPath.writeText(

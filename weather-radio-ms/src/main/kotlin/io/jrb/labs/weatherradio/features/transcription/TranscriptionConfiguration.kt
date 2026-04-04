@@ -30,7 +30,9 @@ import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
 import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
 import io.jrb.labs.weatherradio.features.transcription.port.TranscriptArtifactWriter
+import io.jrb.labs.weatherradio.features.transcription.port.TranscriptNormalizer
 import io.jrb.labs.weatherradio.features.transcription.service.TranscriptionFeature
+import io.jrb.labs.weatherradio.features.transcription.support.DefaultTranscriptNormalizer
 import io.jrb.labs.weatherradio.features.transcription.support.SyntheticAudioFileTranscriber
 import io.jrb.labs.weatherradio.features.transcription.support.TextTranscriptArtifactWriter
 import org.springframework.boot.ApplicationRunner
@@ -78,6 +80,7 @@ class TranscriptionConfiguration {
         datafill: TranscriptionDatafill,
         audioFileTranscriber: AudioFileTranscriber,
         transcriptArtifactWriter: TranscriptArtifactWriter,
+        transcriptNormalizer: TranscriptNormalizer,
         clock: Clock,
     ): TranscriptionFeature = TranscriptionFeature(
         systemEventBus = systemEventBus,
@@ -85,6 +88,7 @@ class TranscriptionConfiguration {
         datafill = datafill,
         audioFileTranscriber = audioFileTranscriber,
         transcriptArtifactWriter = transcriptArtifactWriter,
+        transcriptNormalizer = transcriptNormalizer,
         clock = clock,
     )
 
@@ -94,5 +98,8 @@ class TranscriptionConfiguration {
     ) = ApplicationRunner {
         feature.start()
     }
+
+    @Bean
+    fun transcriptNormalizer(): TranscriptNormalizer = DefaultTranscriptNormalizer()
 
 }

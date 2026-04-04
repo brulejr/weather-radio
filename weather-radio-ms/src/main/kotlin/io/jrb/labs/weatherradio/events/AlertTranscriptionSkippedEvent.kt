@@ -22,36 +22,20 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.transcription
+package io.jrb.labs.weatherradio.events
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import java.util.UUID
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_TRANSCRIPTION)
-data class TranscriptionDatafill(
-
-    val enabled: Boolean = true,
-
-    val syntheticMode: Boolean = true,
-
-    val includeDebugTranscriptDetails: Boolean = false,
-
-    val writeTranscriptFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false,
-
-    val normalizeTranscriptText: Boolean = true,
-
-    val preserveRawTranscriptText: Boolean = true,
-
-    val minimumTranscriptLength: Int = 1,
-
-    val emitTranscriptSkippedEvent: Boolean = true,
-
-    val defaultLanguage: String = "en"
-
+data class AlertTranscriptionSkippedEvent(
+    override val stationId: String,
+    override val alertId: String,
+    val reason: String,
+    override val correlationId: UUID? = null,
+    override val causationId: UUID? = null,
+) : AbstractWeatherRadioEvent(
+    featureId = "transcription",
+    stationId = stationId,
+    alertId = alertId,
+    correlationId = correlationId,
+    causationId = causationId,
 )

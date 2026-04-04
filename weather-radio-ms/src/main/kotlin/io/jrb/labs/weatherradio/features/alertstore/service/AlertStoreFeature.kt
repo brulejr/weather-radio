@@ -43,6 +43,7 @@ import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEvent
@@ -90,6 +91,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioFileCreationFailedEvent> { handleAudioFileCreationFailed(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreatedEvent> { handleTranscriptFileCreated(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreationFailedEvent> { handleTranscriptFileCreationFailed(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionSkippedEvent> { handleTranscriptionSkipped(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -263,8 +265,14 @@ class AlertStoreFeature(
                     "engineName" to event.transcript.engineName,
                     "confidence" to event.transcript.confidence,
                     "transcriptText" to event.transcript.transcriptText,
+                    "language" to event.transcript.details["language"],
+                    "rawTextLength" to event.transcript.details["rawTextLength"],
+                    "normalizedTextLength" to event.transcript.details["normalizedTextLength"],
+                    "wasNormalized" to event.transcript.details["wasNormalized"],
+                    "rawTextPreserved" to event.transcript.details["rawTextPreserved"],
+                    "rawTranscriptText" to event.transcript.details["rawTranscriptText"],
                     "details" to event.transcript.details,
-                ),
+                )
             ),
             source = event,
         )
@@ -376,7 +384,8 @@ class AlertStoreFeature(
                 details = mapOf(
                     "textFilePath" to event.artifact.textFilePath,
                     "jsonFilePath" to event.artifact.jsonFilePath,
-                ),
+                    "artifactCreatedAt" to event.artifact.createdAt.toString(),
+                )
             ),
             source = event,
         )
@@ -390,6 +399,21 @@ class AlertStoreFeature(
                 artifactType = "transcript-file-failed",
                 createdAt = clock.instant(),
                 details = mapOf("reason" to event.reason),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptionSkipped(event: AlertTranscriptionSkippedEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcription-skipped",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "reason" to event.reason,
+                ),
             ),
             source = event,
         )

@@ -22,36 +22,22 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.transcription
+package io.jrb.labs.weatherradio.features.transcription.support
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.transcription.port.NormalizedTranscript
+import io.jrb.labs.weatherradio.features.transcription.port.TranscriptNormalizer
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_TRANSCRIPTION)
-data class TranscriptionDatafill(
+class DefaultTranscriptNormalizer : TranscriptNormalizer {
+    override fun normalize(text: String): NormalizedTranscript {
+        val normalized = text
+            .replace(Regex("""[ \t]+"""), " ")
+            .replace(Regex("""\n{3,}"""), "\n\n")
+            .trim()
 
-    val enabled: Boolean = true,
-
-    val syntheticMode: Boolean = true,
-
-    val includeDebugTranscriptDetails: Boolean = false,
-
-    val writeTranscriptFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false,
-
-    val normalizeTranscriptText: Boolean = true,
-
-    val preserveRawTranscriptText: Boolean = true,
-
-    val minimumTranscriptLength: Int = 1,
-
-    val emitTranscriptSkippedEvent: Boolean = true,
-
-    val defaultLanguage: String = "en"
-
-)
+        return NormalizedTranscript(
+            rawText = text,
+            normalizedText = normalized,
+            wasChanged = normalized != text,
+        )
+    }
+}

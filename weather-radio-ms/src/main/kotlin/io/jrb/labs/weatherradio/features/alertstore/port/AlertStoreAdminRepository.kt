@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,12 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore.support
+package io.jrb.labs.weatherradio.features.alertstore.port
 
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredArtifactPruneRun
-import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
-import java.util.concurrent.ConcurrentLinkedDeque
+import io.jrb.labs.weatherradio.features.alertstore.model.StoredAdminOperationRecord
 
-class InMemoryArtifactPruneRunRepository : ArtifactPruneRunRepository {
-    private val runs = ConcurrentLinkedDeque<StoredArtifactPruneRun>()
-
-    override fun append(run: StoredArtifactPruneRun) {
-        runs.addFirst(run)
-        while (runs.size > 500) {
-            runs.pollLast()
-        }
-    }
-
-    override fun findRecent(limit: Int): List<StoredArtifactPruneRun> =
-        runs.take(limit)
-
-    override fun findLatest(): StoredArtifactPruneRun? =
-        runs.peekFirst()
+interface AlertStoreAdminRepository {
+    fun append(record: StoredAdminOperationRecord)
+    fun findRecent(category: String? = null, limit: Int = 50): List<StoredAdminOperationRecord>
+    fun findLatest(category: String? = null): StoredAdminOperationRecord?
 }

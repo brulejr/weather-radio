@@ -24,8 +24,8 @@
 
 package io.jrb.labs.weatherradio.features.alertstore.service
 
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredArtifactPruneRun
-import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
+import io.jrb.labs.weatherradio.features.alertstore.model.StoredAdminOperationRecord
+import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreAdminRepository
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Duration
@@ -34,7 +34,7 @@ import java.util.UUID
 class AlertArtifactPruneRunner(
     private val retentionService: AlertArtifactRetentionService,
     private val statusService: AlertArtifactPruneStatusService,
-    private val historyRepository: ArtifactPruneRunRepository,
+    private val adminRepository: AlertStoreAdminRepository,
     private val metrics: AlertArtifactPruneMetrics,
     private val clock: Clock,
 ) {
@@ -66,14 +66,15 @@ class AlertArtifactPruneRunner(
                 durationMillis,
             )
 
-            historyRepository.append(
-                StoredArtifactPruneRun(
-                    runId = UUID.randomUUID().toString(),
-                    source = source,
+            adminRepository.append(
+                StoredAdminOperationRecord(
+                    id = UUID.randomUUID().toString(),
+                    category = "artifact-prune",
+                    operation = source,
                     startedAt = startedAt.toString(),
                     completedAt = clock.instant().toString(),
                     success = true,
-                    result = mapOf(
+                    payload = mapOf(
                         "alertsScanned" to result.alertsScanned,
                         "alertsEligible" to result.alertsEligible,
                         "alertsPruned" to result.alertsPruned,
@@ -96,6 +97,19 @@ class AlertArtifactPruneRunner(
                 source,
                 durationMillis,
                 error.message,
+            )
+
+            adminRepository.append(
+                StoredAdminOperationRecord(
+                    id = UUID.randomUUID().toString(),
+                    category = "artifact-prune",
+                    operation = source,
+                    startedAt = startedAt.toString(),
+                    completedAt = clock.instant().toString(),
+                    success = false,
+                    payload = emptyMap(),
+                    error = error.message ?: error::class.java.simpleName,
+                )
             )
         }.getOrThrow()
     }

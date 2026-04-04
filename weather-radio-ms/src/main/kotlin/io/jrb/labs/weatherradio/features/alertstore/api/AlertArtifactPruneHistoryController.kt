@@ -25,8 +25,8 @@
 package io.jrb.labs.weatherradio.features.alertstore.api
 
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredArtifactPruneRun
-import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
+import io.jrb.labs.weatherradio.features.alertstore.model.StoredAdminOperationRecord
+import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreAdminRepository
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -43,18 +43,23 @@ import org.springframework.web.bind.annotation.RestController
     matchIfMissing = true
 )
 class AlertArtifactPruneHistoryController(
-    private val historyRepository: ArtifactPruneRunRepository,
+    private val adminRepository: AlertStoreAdminRepository,
 ) {
 
     @GetMapping("/history")
     fun history(
         @RequestParam(defaultValue = "25") limit: Int,
-    ): ResponseEntity<List<StoredArtifactPruneRun>> =
-        ResponseEntity.ok(historyRepository.findRecent(limit.coerceIn(1, 200)))
+    ): ResponseEntity<List<StoredAdminOperationRecord>> =
+        ResponseEntity.ok(
+            adminRepository.findRecent(
+                category = "artifact-prune",
+                limit = limit.coerceIn(1, 200),
+            )
+        )
 
     @GetMapping("/history/latest")
-    fun latest(): ResponseEntity<StoredArtifactPruneRun> =
-        historyRepository.findLatest()
+    fun latest(): ResponseEntity<StoredAdminOperationRecord> =
+        adminRepository.findLatest(category = "artifact-prune")
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 }

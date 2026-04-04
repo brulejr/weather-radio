@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,15 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore.port
+package io.jrb.labs.weatherradio.features.alertstore.model
 
-import io.jrb.labs.weatherradio.features.alertstore.model.StoredArtifactPruneRun
-
-interface ArtifactPruneRunRepository {
-    fun append(run: StoredArtifactPruneRun)
-    fun findRecent(limit: Int = 50): List<StoredArtifactPruneRun>
-    fun findLatest(): StoredArtifactPruneRun?
-}
+data class StoredAdminOperationRecord(
+    val id: String,
+    val category: String,
+    val operation: String,
+    val startedAt: String,
+    val completedAt: String? = null,
+    val success: Boolean,
+    val payload: Map<String, Any?> = emptyMap(),
+    val error: String? = null,
+)

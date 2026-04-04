@@ -42,5 +42,8 @@ data class AlertStoreDatafill(
     val deleteArtifactFiles: Boolean = false,
     val artifactPruningSchedulerEnabled: Boolean = false,
     val artifactPruningIntervalMillis: Long = 900_000,
-    val artifactPruningRunOnStartup: Boolean = false
+    val artifactPruningRunOnStartup: Boolean = false,
+    val adminStoreDir: String = "./var/alert-store-admin",
+    val adminStoreFileName: String = "operations.jsonl",
+    val adminStoreMaxEntries: Int = 1000
 )

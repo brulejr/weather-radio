@@ -24,11 +24,12 @@
 
 package io.jrb.labs.weatherradio.features.alertstore
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
+import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreAdminRepository
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
-import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneHealthIndicator
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneMetrics
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneRunner
@@ -39,8 +40,8 @@ import io.jrb.labs.weatherradio.features.alertstore.service.AlertStoreFeature
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactLookupService
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.service.MicrometerAlertArtifactPruneMetrics
+import io.jrb.labs.weatherradio.features.alertstore.support.FileAlertStoreAdminRepository
 import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryAlertStoreRepository
-import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryArtifactPruneRunRepository
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -48,6 +49,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableScheduling
+import java.nio.file.Path
 import java.time.Clock
 
 @Configuration
@@ -120,10 +122,10 @@ class AlertStoreConfiguration {
     fun alertArtifactPruneRunner(
         retentionService: AlertArtifactRetentionService,
         statusService: AlertArtifactPruneStatusService,
-        historyRepository: ArtifactPruneRunRepository,
+        adminRepository: AlertStoreAdminRepository,
         metrics: AlertArtifactPruneMetrics,
         clock: Clock,
-    ) = AlertArtifactPruneRunner(retentionService, statusService, historyRepository, metrics, clock)
+    ) = AlertArtifactPruneRunner(retentionService, statusService, adminRepository, metrics, clock)
 
     @Bean
     fun alertArtifactPruneHealthIndicator(
@@ -131,6 +133,13 @@ class AlertStoreConfiguration {
     ) = AlertArtifactPruneHealthIndicator(statusService)
 
     @Bean
-    fun historyRepository() = InMemoryArtifactPruneRunRepository()
+    fun alertStoreAdminRepository(
+        objectMapper: ObjectMapper,
+        datafill: AlertStoreDatafill,
+    ) = FileAlertStoreAdminRepository(
+        objectMapper = objectMapper,
+        filePath = Path.of(datafill.adminStoreDir, datafill.adminStoreFileName),
+        maxEntries = datafill.adminStoreMaxEntries,
+    )
 
 }

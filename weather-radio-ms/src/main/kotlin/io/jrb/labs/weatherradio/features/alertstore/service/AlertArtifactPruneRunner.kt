@@ -24,13 +24,17 @@
 
 package io.jrb.labs.weatherradio.features.alertstore.service
 
+import io.jrb.labs.weatherradio.features.alertstore.model.StoredArtifactPruneRun
+import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Duration
+import java.util.UUID
 
 class AlertArtifactPruneRunner(
     private val retentionService: AlertArtifactRetentionService,
     private val statusService: AlertArtifactPruneStatusService,
+    private val historyRepository: ArtifactPruneRunRepository,
     private val metrics: AlertArtifactPruneMetrics,
     private val clock: Clock,
 ) {
@@ -60,6 +64,27 @@ class AlertArtifactPruneRunner(
                 result.filesRejected,
                 result.dryRun,
                 durationMillis,
+            )
+
+            historyRepository.append(
+                StoredArtifactPruneRun(
+                    runId = UUID.randomUUID().toString(),
+                    source = source,
+                    startedAt = startedAt.toString(),
+                    completedAt = clock.instant().toString(),
+                    success = true,
+                    result = mapOf(
+                        "alertsScanned" to result.alertsScanned,
+                        "alertsEligible" to result.alertsEligible,
+                        "alertsPruned" to result.alertsPruned,
+                        "artifactsRemoved" to result.artifactsRemoved,
+                        "filesDeleted" to result.filesDeleted,
+                        "filesMissing" to result.filesMissing,
+                        "filesRejected" to result.filesRejected,
+                        "dryRun" to result.dryRun,
+                    ),
+                    error = null,
+                )
             )
         }.onFailure { error ->
             val durationMillis = Duration.between(startInstant, clock.instant()).toMillis()

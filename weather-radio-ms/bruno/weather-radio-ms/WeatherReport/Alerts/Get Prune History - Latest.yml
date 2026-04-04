@@ -1,0 +1,15 @@
+info:
+  name: Get Prune History - Latest
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{weather_radio_ms_url}}/api/admin/alerts/artifacts/prune/history/latest"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

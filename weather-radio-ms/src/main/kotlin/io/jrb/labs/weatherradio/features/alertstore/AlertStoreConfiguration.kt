@@ -28,6 +28,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.port.ArtifactPruneRunRepository
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneHealthIndicator
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneMetrics
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneRunner
@@ -39,6 +40,7 @@ import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifact
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.service.MicrometerAlertArtifactPruneMetrics
 import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryAlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryArtifactPruneRunRepository
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -118,13 +120,17 @@ class AlertStoreConfiguration {
     fun alertArtifactPruneRunner(
         retentionService: AlertArtifactRetentionService,
         statusService: AlertArtifactPruneStatusService,
+        historyRepository: ArtifactPruneRunRepository,
         metrics: AlertArtifactPruneMetrics,
         clock: Clock,
-    ) = AlertArtifactPruneRunner(retentionService, statusService, metrics, clock)
+    ) = AlertArtifactPruneRunner(retentionService, statusService, historyRepository, metrics, clock)
 
     @Bean
     fun alertArtifactPruneHealthIndicator(
         statusService: AlertArtifactPruneStatusService,
     ) = AlertArtifactPruneHealthIndicator(statusService)
+
+    @Bean
+    fun historyRepository() = InMemoryArtifactPruneRunRepository()
 
 }

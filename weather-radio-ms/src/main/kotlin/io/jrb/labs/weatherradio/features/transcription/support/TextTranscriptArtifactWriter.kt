@@ -61,6 +61,9 @@ class TextTranscriptArtifactWriter(
             "wasNormalized" to transcript.details["wasNormalized"],
             "rawTextPreserved" to transcript.details["rawTextPreserved"],
             "rawTranscriptText" to transcript.details["rawTranscriptText"],
+            "confidenceAccepted" to transcript.details["confidenceAccepted"],
+            "minimumAcceptedConfidence" to transcript.details["minimumAcceptedConfidence"],
+            "skipLowConfidenceTranscripts" to transcript.details["skipLowConfidenceTranscripts"],
             "details" to transcript.details,
         )
         jsonPath.writeText(

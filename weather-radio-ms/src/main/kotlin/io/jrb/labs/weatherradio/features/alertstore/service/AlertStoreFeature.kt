@@ -46,6 +46,7 @@ import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFallbackSelectedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionLowConfidenceEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
@@ -98,6 +99,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureSkippedEvent> { handleAudioCaptureSkipped(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCapturePoorQualityEvent> { handleAudioCapturePoorQuality(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionFallbackSelectedEvent> { handleTranscriptionFallbackSelected(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionLowConfidenceEvent> { handleTranscriptionLowConfidence(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -305,6 +307,9 @@ class AlertStoreFeature(
                     "sourceAudioRmsAmplitude" to event.transcript.details["sourceAudioRmsAmplitude"],
                     "sourceAudioSilenceFraction" to event.transcript.details["sourceAudioSilenceFraction"],
                     "sourceAudioClippedFraction" to event.transcript.details["sourceAudioClippedFraction"],
+                    "confidenceAccepted" to event.transcript.details["confidenceAccepted"],
+                    "minimumAcceptedConfidence" to event.transcript.details["minimumAcceptedConfidence"],
+                    "skipLowConfidenceTranscripts" to event.transcript.details["skipLowConfidenceTranscripts"],
                     "details" to event.transcript.details,
                 ),
             ),
@@ -556,6 +561,23 @@ class AlertStoreFeature(
                     "reason" to event.reason,
                     "primaryEngineName" to event.primaryEngineName,
                     "fallbackEngineName" to event.fallbackEngineName,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleTranscriptionLowConfidence(event: AlertTranscriptionLowConfidenceEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "transcription-low-confidence",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "confidence" to event.confidence,
+                    "minimumAcceptedConfidence" to event.minimumAcceptedConfidence,
+                    "engineName" to event.engineName,
                 ),
             ),
             source = event,

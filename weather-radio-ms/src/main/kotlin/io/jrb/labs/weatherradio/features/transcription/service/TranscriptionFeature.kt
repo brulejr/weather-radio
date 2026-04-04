@@ -33,6 +33,7 @@ import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFallbackSelectedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptionLowConfidenceEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
@@ -180,6 +181,37 @@ class TranscriptionFeature(
                 }
             }
 
+            val transcriptConfidence = rawTranscript.confidence
+
+            if (transcriptConfidence != null && transcriptConfidence < datafill.minimumAcceptedConfidence) {
+                if (datafill.emitLowConfidenceTranscriptEvent) {
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptionLowConfidenceEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            confidence = transcriptConfidence,
+                            minimumAcceptedConfidence = datafill.minimumAcceptedConfidence,
+                            engineName = rawTranscript.engineName,
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                }
+
+                if (datafill.skipLowConfidenceTranscripts) {
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptionSkippedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            reason = "Transcript confidence $transcriptConfidence below minimum ${datafill.minimumAcceptedConfidence}",
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                    return
+                }
+            }
+
             val normalized = if (datafill.normalizeTranscriptText) {
                 transcriptNormalizer.normalize(rawTranscript.transcriptText)
             } else {
@@ -239,6 +271,9 @@ class TranscriptionFeature(
                     "sourceAudioRmsAmplitude" to event.artifact.qualityMetrics?.rmsAmplitude,
                     "sourceAudioSilenceFraction" to event.artifact.qualityMetrics?.silenceFraction,
                     "sourceAudioClippedFraction" to event.artifact.qualityMetrics?.clippedFraction,
+                    "confidenceAccepted" to (rawTranscript.confidence?.let { it >= datafill.minimumAcceptedConfidence }),
+                    "minimumAcceptedConfidence" to datafill.minimumAcceptedConfidence,
+                    "skipLowConfidenceTranscripts" to datafill.skipLowConfidenceTranscripts,
                 )
             )
 

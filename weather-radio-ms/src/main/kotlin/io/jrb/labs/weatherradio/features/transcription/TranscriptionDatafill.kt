@@ -64,6 +64,12 @@ data class TranscriptionDatafill(
 
     val primaryEngineName: String = "synthetic-audio-file-transcriber",
 
-    val fallbackEngineName: String = "synthetic-audio-file-transcriber-fallback"
+    val fallbackEngineName: String = "synthetic-audio-file-transcriber-fallback",
+
+    val minimumAcceptedConfidence: Double = 0.50,
+
+    val emitLowConfidenceTranscriptEvent: Boolean = true,
+
+    val skipLowConfidenceTranscripts: Boolean = false
 
 )

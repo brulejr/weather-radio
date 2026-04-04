@@ -39,5 +39,8 @@ data class AlertStoreDatafill(
     val pruneExpiredAlertsAfterHours: Long = 168,
     val pruneIgnoredAlertsAfterHours: Long = 24,
     val artifactPruningScanLimit: Int = 250,
-    val deleteArtifactFiles: Boolean = false
+    val deleteArtifactFiles: Boolean = false,
+    val artifactPruningSchedulerEnabled: Boolean = false,
+    val artifactPruningIntervalMillis: Long = 900_000,
+    val artifactPruningRunOnStartup: Boolean = false
 )

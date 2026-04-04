@@ -28,6 +28,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruningScheduler
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertStoreFeature
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactLookupService
@@ -87,5 +88,11 @@ class AlertStoreConfiguration {
         repository: AlertStoreRepository,
         clock: Clock,
     ): AlertArtifactRetentionService = DefaultAlertArtifactRetentionService(datafill, repository, clock)
+
+    @Bean
+    fun alertArtifactPruningScheduler(
+        datafill: AlertStoreDatafill,
+        retentionService: AlertArtifactRetentionService,
+    ) = AlertArtifactPruningScheduler(datafill, retentionService)
 
 }

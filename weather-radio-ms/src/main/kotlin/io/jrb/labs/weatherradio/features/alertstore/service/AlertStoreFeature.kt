@@ -218,6 +218,12 @@ class AlertStoreFeature(
             "captureReason" to event.capture.captureReason,
             "preRollFrameCount" to event.capture.preRollFrameCount,
             "wasPartial" to event.capture.wasPartial,
+            "qualityClassification" to event.capture.qualityClassification,
+            "acceptableForTranscription" to event.capture.acceptableForTranscription,
+            "peakAmplitude" to event.capture.qualityMetrics?.peakAmplitude,
+            "rmsAmplitude" to event.capture.qualityMetrics?.rmsAmplitude,
+            "silenceFraction" to event.capture.qualityMetrics?.silenceFraction,
+            "clippedFraction" to event.capture.qualityMetrics?.clippedFraction,
         )
 
         if (datafill.storeAudioFramesInMemory) {
@@ -279,8 +285,26 @@ class AlertStoreFeature(
                     "wasNormalized" to event.transcript.details["wasNormalized"],
                     "rawTextPreserved" to event.transcript.details["rawTextPreserved"],
                     "rawTranscriptText" to event.transcript.details["rawTranscriptText"],
+                    "sourceAudioFilePath" to event.transcript.details["sourceAudioFilePath"],
+                    "sourceAudioFormat" to event.transcript.details["sourceAudioFormat"],
+                    "sourceAudioSampleRateHz" to event.transcript.details["sourceAudioSampleRateHz"],
+                    "sourceAudioChannelCount" to event.transcript.details["sourceAudioChannelCount"],
+                    "sourceAudioFrameCount" to event.transcript.details["sourceAudioFrameCount"],
+                    "sourceAudioCreatedAt" to event.transcript.details["sourceAudioCreatedAt"],
+                    "sourceAudioStartedAt" to event.transcript.details["sourceAudioStartedAt"],
+                    "sourceAudioCompletedAt" to event.transcript.details["sourceAudioCompletedAt"],
+                    "sourceAudioDurationMillis" to event.transcript.details["sourceAudioDurationMillis"],
+                    "sourceAudioByteLength" to event.transcript.details["sourceAudioByteLength"],
+                    "sourceAudioCaptureReason" to event.transcript.details["sourceAudioCaptureReason"],
+                    "sourceAudioWasPartial" to event.transcript.details["sourceAudioWasPartial"],
+                    "sourceAudioQualityClassification" to event.transcript.details["sourceAudioQualityClassification"],
+                    "sourceAudioAcceptableForTranscription" to event.transcript.details["sourceAudioAcceptableForTranscription"],
+                    "sourceAudioPeakAmplitude" to event.transcript.details["sourceAudioPeakAmplitude"],
+                    "sourceAudioRmsAmplitude" to event.transcript.details["sourceAudioRmsAmplitude"],
+                    "sourceAudioSilenceFraction" to event.transcript.details["sourceAudioSilenceFraction"],
+                    "sourceAudioClippedFraction" to event.transcript.details["sourceAudioClippedFraction"],
                     "details" to event.transcript.details,
-                )
+                ),
             ),
             source = event,
         )
@@ -370,7 +394,13 @@ class AlertStoreFeature(
                     "byteLength" to event.artifact.byteLength,
                     "captureReason" to event.artifact.captureReason,
                     "wasPartial" to event.artifact.wasPartial,
-                )
+                    "qualityClassification" to event.artifact.qualityClassification,
+                    "acceptableForTranscription" to event.artifact.acceptableForTranscription,
+                    "peakAmplitude" to event.artifact.qualityMetrics?.peakAmplitude,
+                    "rmsAmplitude" to event.artifact.qualityMetrics?.rmsAmplitude,
+                    "silenceFraction" to event.artifact.qualityMetrics?.silenceFraction,
+                    "clippedFraction" to event.artifact.qualityMetrics?.clippedFraction,
+                ),
             ),
             source = event,
         )
@@ -400,7 +430,7 @@ class AlertStoreFeature(
                     "textFilePath" to event.artifact.textFilePath,
                     "jsonFilePath" to event.artifact.jsonFilePath,
                     "artifactCreatedAt" to event.artifact.createdAt.toString(),
-                )
+                ),
             ),
             source = event,
         )

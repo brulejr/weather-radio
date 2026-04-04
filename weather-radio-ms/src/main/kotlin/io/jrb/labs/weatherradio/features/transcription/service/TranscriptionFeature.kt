@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2026 Jon Brule <brulejr@gmail.com>
+ * Copyright (c) 2026 Jon Brule
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,12 +28,16 @@ import io.jrb.labs.commons.eventbus.EventBus.Subscription
 import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.events.AlertAudioFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreatedEvent
+import io.jrb.labs.weatherradio.events.AlertTranscriptFileCreationFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionFailedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertTranscriptionStartedEvent
 import io.jrb.labs.weatherradio.events.FeatureHeartbeatEvent
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.transcription.TranscriptionDatafill
+import io.jrb.labs.weatherradio.features.transcription.model.AlertTranscriptRecord
 import io.jrb.labs.weatherradio.features.transcription.port.AudioFileTranscriber
 import io.jrb.labs.weatherradio.features.transcription.port.NormalizedTranscript
 import io.jrb.labs.weatherradio.features.transcription.port.TranscriptArtifactWriter
@@ -68,8 +72,8 @@ class TranscriptionFeature(
             )
         )
 
-        subscription = weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> { event ->
-            handleAudioFileCreated(event)
+        subscription = weatherRadioEventBus.subscribe<AlertAudioFileCreatedEvent> {
+            handleAudioFileCreated(it)
         }
 
         weatherRadioEventBus.send(
@@ -147,7 +151,75 @@ class TranscriptionFeature(
                 return
             }
 
-            // existing transcript creation flow continues here...
+            val transcript = AlertTranscriptRecord(
+                alertId = event.alertId,
+                stationId = event.stationId,
+                transcriptText = finalText,
+                confidence = rawTranscript.confidence,
+                createdAt = clock.instant(),
+                engineName = rawTranscript.engineName,
+                details = rawTranscript.details + mapOf(
+                    "language" to datafill.defaultLanguage,
+                    "rawTranscriptText" to normalized.rawText.takeIf { datafill.preserveRawTranscriptText },
+                    "rawTextLength" to normalized.rawText.length,
+                    "normalizedTextLength" to finalText.length,
+                    "wasNormalized" to normalized.wasChanged,
+                    "rawTextPreserved" to datafill.preserveRawTranscriptText,
+                    "sourceAudioFilePath" to event.artifact.filePath,
+                    "sourceAudioFormat" to event.artifact.format,
+                    "sourceAudioSampleRateHz" to event.artifact.sampleRateHz,
+                    "sourceAudioChannelCount" to event.artifact.channelCount,
+                    "sourceAudioFrameCount" to event.artifact.frameCount,
+                    "sourceAudioCreatedAt" to event.artifact.createdAt.toString(),
+                    "sourceAudioStartedAt" to event.artifact.startedAt.toString(),
+                    "sourceAudioCompletedAt" to event.artifact.completedAt.toString(),
+                    "sourceAudioDurationMillis" to event.artifact.durationMillis,
+                    "sourceAudioByteLength" to event.artifact.byteLength,
+                    "sourceAudioCaptureReason" to event.artifact.captureReason,
+                    "sourceAudioWasPartial" to event.artifact.wasPartial,
+                    "sourceAudioQualityClassification" to event.artifact.qualityClassification,
+                    "sourceAudioAcceptableForTranscription" to event.artifact.acceptableForTranscription,
+                    "sourceAudioPeakAmplitude" to event.artifact.qualityMetrics?.peakAmplitude,
+                    "sourceAudioRmsAmplitude" to event.artifact.qualityMetrics?.rmsAmplitude,
+                    "sourceAudioSilenceFraction" to event.artifact.qualityMetrics?.silenceFraction,
+                    "sourceAudioClippedFraction" to event.artifact.qualityMetrics?.clippedFraction,
+                )
+            )
+
+            weatherRadioEventBus.publish(
+                AlertTranscriptCreatedEvent(
+                    stationId = event.stationId,
+                    alertId = event.alertId,
+                    transcript = transcript,
+                    correlationId = event.correlationId,
+                    causationId = event.eventId,
+                )
+            )
+
+            if (datafill.writeTranscriptFiles) {
+                try {
+                    val artifact = transcriptArtifactWriter.writeTranscript(transcript)
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptFileCreatedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            artifact = artifact,
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                } catch (ex: Exception) {
+                    weatherRadioEventBus.publish(
+                        AlertTranscriptFileCreationFailedEvent(
+                            stationId = event.stationId,
+                            alertId = event.alertId,
+                            reason = ex.message ?: "Unknown transcript file creation failure",
+                            correlationId = event.correlationId,
+                            causationId = event.eventId,
+                        )
+                    )
+                }
+            }
         } catch (ex: Exception) {
             weatherRadioEventBus.publish(
                 AlertTranscriptionFailedEvent(
@@ -160,5 +232,4 @@ class TranscriptionFeature(
             )
         }
     }
-
 }

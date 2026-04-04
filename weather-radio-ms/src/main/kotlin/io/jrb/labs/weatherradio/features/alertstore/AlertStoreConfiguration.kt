@@ -28,13 +28,18 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
 import io.jrb.labs.weatherradio.features.alertstore.port.AlertStoreRepository
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneHealthIndicator
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneMetrics
+import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneRunner
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneStatusService
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruningScheduler
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactRetentionService
 import io.jrb.labs.weatherradio.features.alertstore.service.AlertStoreFeature
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactLookupService
 import io.jrb.labs.weatherradio.features.alertstore.service.DefaultAlertArtifactRetentionService
+import io.jrb.labs.weatherradio.features.alertstore.service.MicrometerAlertArtifactPruneMetrics
 import io.jrb.labs.weatherradio.features.alertstore.support.InMemoryAlertStoreRepository
+import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -96,14 +101,30 @@ class AlertStoreConfiguration {
     @ConditionalOnProperty(prefix = CONFIG_PREFIX_ALERT_STORE, name = ["artifact-pruning-scheduler-enabled"], havingValue = "true")
     fun alertArtifactPruningScheduler(
         datafill: AlertStoreDatafill,
-        retentionService: AlertArtifactRetentionService,
-        statusService: AlertArtifactPruneStatusService
-    ) = AlertArtifactPruningScheduler(datafill, retentionService, statusService)
+        pruneRunner: AlertArtifactPruneRunner
+    ) = AlertArtifactPruningScheduler(datafill, pruneRunner)
 
     @Bean
     fun alertArtifactPruneStatusService(
         datafill: AlertStoreDatafill,
         clock: Clock,
     ) = AlertArtifactPruneStatusService(datafill, clock)
+
+    @Bean
+    fun alertArtifactPruneMetrics(meterRegistry: MeterRegistry) =
+        MicrometerAlertArtifactPruneMetrics(meterRegistry)
+
+    @Bean
+    fun alertArtifactPruneRunner(
+        retentionService: AlertArtifactRetentionService,
+        statusService: AlertArtifactPruneStatusService,
+        metrics: AlertArtifactPruneMetrics,
+        clock: Clock,
+    ) = AlertArtifactPruneRunner(retentionService, statusService, metrics, clock)
+
+    @Bean
+    fun alertArtifactPruneHealthIndicator(
+        statusService: AlertArtifactPruneStatusService,
+    ) = AlertArtifactPruneHealthIndicator(statusService)
 
 }

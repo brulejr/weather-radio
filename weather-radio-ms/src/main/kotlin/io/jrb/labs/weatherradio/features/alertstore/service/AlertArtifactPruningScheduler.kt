@@ -27,16 +27,12 @@ package io.jrb.labs.weatherradio.features.alertstore.service
 import io.jrb.labs.weatherradio.features.alertstore.AlertStoreDatafill
 import jakarta.annotation.PostConstruct
 import kotlinx.coroutines.runBlocking
-import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 
 class AlertArtifactPruningScheduler(
     private val datafill: AlertStoreDatafill,
-    private val retentionService: AlertArtifactRetentionService,
-    private val statusService: AlertArtifactPruneStatusService
+    private val pruneRunner: AlertArtifactPruneRunner,
 ) {
-
-    private val log = LoggerFactory.getLogger(javaClass)
 
     @PostConstruct
     fun runOnStartupIfEnabled() {
@@ -44,7 +40,7 @@ class AlertArtifactPruningScheduler(
         if (!datafill.artifactPruningRunOnStartup) return
 
         runBlocking {
-            runPrune("startup")
+            pruneRunner.run("startup")
         }
     }
 
@@ -55,37 +51,7 @@ class AlertArtifactPruningScheduler(
         if (!datafill.artifactPruningSchedulerEnabled) return
 
         runBlocking {
-            runPrune("scheduled")
+            pruneRunner.run("scheduled")
         }
     }
-
-    private suspend fun runPrune(source: String) {
-        val startedAt = statusService.recordStart(source)
-
-        runCatching {
-            retentionService.pruneArtifacts()
-        }.onSuccess { result ->
-            statusService.recordSuccess(source, startedAt, result)
-            log.info(
-                "Artifact prune run source={} alertsScanned={} alertsEligible={} alertsPruned={} artifactsRemoved={} filesDeleted={} filesMissing={} filesRejected={} dryRun={}",
-                source,
-                result.alertsScanned,
-                result.alertsEligible,
-                result.alertsPruned,
-                result.artifactsRemoved,
-                result.filesDeleted,
-                result.filesMissing,
-                result.filesRejected,
-                result.dryRun,
-            )
-        }.onFailure { error ->
-            statusService.recordFailure(source, startedAt, error)
-            log.warn(
-                "Artifact prune run failed source={} reason={}",
-                source,
-                error.message,
-            )
-        }
-    }
-
 }

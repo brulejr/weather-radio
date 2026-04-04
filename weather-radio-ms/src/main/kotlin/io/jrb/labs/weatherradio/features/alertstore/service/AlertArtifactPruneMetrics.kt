@@ -22,30 +22,9 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.alertstore.api
+package io.jrb.labs.weatherradio.features.alertstore.service
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_ALERT_STORE
-import io.jrb.labs.weatherradio.features.alertstore.service.AlertArtifactPruneRunner
-import io.jrb.labs.weatherradio.features.alertstore.service.ArtifactPruneResult
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-
-@RestController
-@RequestMapping("/api/admin/alerts/artifacts")
-@ConditionalOnProperty(
-    prefix = CONFIG_PREFIX_ALERT_STORE,
-    name = ["enabled"],
-    havingValue = "true",
-    matchIfMissing = true
-)
-class AlertArtifactRetentionController(
-    private val pruneRunner: AlertArtifactPruneRunner,
-) {
-
-    @PostMapping("/prune")
-    suspend fun prune(): ResponseEntity<ArtifactPruneResult> =
-        ResponseEntity.ok(pruneRunner.run("manual"))
+interface AlertArtifactPruneMetrics {
+    fun recordSuccess(source: String, result: ArtifactPruneResult, durationMillis: Long)
+    fun recordFailure(source: String, durationMillis: Long, throwable: Throwable)
 }

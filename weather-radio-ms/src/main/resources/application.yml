@@ -8,7 +8,6 @@ management:
       exposure:
         include: health,info,metrics,prometheus
   health:
-    show-details: always
     mongo.enabled: false
 
 management.info:

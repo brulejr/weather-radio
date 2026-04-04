@@ -61,6 +61,7 @@ class DefaultAlertArtifactLookupService(
                 artifactType = artifact.artifactType,
                 createdAt = artifact.createdAt.toString(),
                 exists = resolved?.let { Files.exists(it) } ?: false,
+                lifecycleOnly = artifact.artifactType !in setOf("audio-file", "transcript-file"),
                 contentType = contentType,
                 sizeBytes = resolved
                     ?.takeIf { Files.exists(it) }

@@ -28,6 +28,7 @@ data class AlertArtifactResponse(
     val artifactType: String,
     val createdAt: String,
     val exists: Boolean,
+    val lifecycleOnly: Boolean,
     val contentType: String? = null,
     val sizeBytes: Long? = null,
     val downloadUrl: String? = null,

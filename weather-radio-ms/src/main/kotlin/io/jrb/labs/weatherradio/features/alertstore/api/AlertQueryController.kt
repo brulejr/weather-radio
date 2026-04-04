@@ -86,18 +86,66 @@ class AlertQueryController(
             updatedAt = updatedAt.toString(),
         )
 
-    private fun StoredAlertRecord.toDetailResponse(): AlertDetailResponse =
-        AlertDetailResponse(
+    private fun StoredAlertRecord.toDetailResponse(): AlertDetailResponse {
+        val artifactResponses = artifactLookupService.listArtifacts(alertId).orEmpty()
+
+        val audioCaptured = artifacts.lastOrNull { it.artifactType == "audio-captured" }
+        val audioSkipped = artifacts.lastOrNull { it.artifactType == "audio-capture-skipped" }
+        val audioFailed = artifacts.lastOrNull { it.artifactType == "audio-capture-failed" }
+        val audioPoorQuality = artifacts.lastOrNull { it.artifactType == "audio-capture-poor-quality" }
+        val audioFile = artifacts.lastOrNull { it.artifactType == "audio-file" }
+
+        val transcriptionStarted = artifacts.lastOrNull { it.artifactType == "transcription-started" }
+        val transcriptionSkipped = artifacts.lastOrNull { it.artifactType == "transcription-skipped" }
+        val transcriptionFailed = artifacts.lastOrNull { it.artifactType == "transcription-failed" }
+        val transcriptionLowConfidence = artifacts.lastOrNull { it.artifactType == "transcription-low-confidence" }
+        val transcriptionFallbackSelected = artifacts.lastOrNull { it.artifactType == "transcription-fallback-selected" }
+        val transcriptCreated = artifacts.lastOrNull { it.artifactType == "transcript-created" }
+        val transcriptFile = artifacts.lastOrNull { it.artifactType == "transcript-file" }
+
+        return AlertDetailResponse(
             alertId = alertId,
             stationId = stationId,
             state = state,
             eventCode = header?.eventCode,
             senderId = header?.senderId,
             countyCodes = header?.countyCodes.orEmpty(),
-            locallyRelevant = locallyRelevant,
+            locallyRelevant = locallyRelevant ?: false,
             openedAt = openedAt?.toString(),
             updatedAt = updatedAt.toString(),
-            artifacts = artifactLookupService.listArtifacts(alertId).orEmpty(),
+            audio = AlertAudioSummary(
+                captured = audioCaptured != null,
+                skipped = audioSkipped != null,
+                failed = audioFailed != null,
+                poorQuality = audioPoorQuality != null,
+                fileCreated = audioFile != null,
+                qualityClassification = audioFile?.details?.get("qualityClassification") as? String
+                    ?: audioCaptured?.details?.get("qualityClassification") as? String
+                    ?: audioPoorQuality?.details?.get("classification") as? String,
+                acceptableForTranscription = audioFile?.details?.get("acceptableForTranscription") as? Boolean
+                    ?: audioCaptured?.details?.get("acceptableForTranscription") as? Boolean,
+                durationMillis = (audioFile?.details?.get("durationMillis") as? Number)?.toLong()
+                    ?: (audioCaptured?.details?.get("durationMillis") as? Number)?.toLong(),
+                byteLength = (audioFile?.details?.get("byteLength") as? Number)?.toLong(),
+                filePath = audioFile?.details?.get("filePath") as? String,
+            ),
+            transcription = AlertTranscriptionSummary(
+                started = transcriptionStarted != null,
+                skipped = transcriptionSkipped != null,
+                failed = transcriptionFailed != null,
+                lowConfidence = transcriptionLowConfidence != null,
+                fallbackSelected = transcriptionFallbackSelected != null,
+                transcriptCreated = transcriptCreated != null,
+                transcriptFileCreated = transcriptFile != null,
+                engineName = transcriptCreated?.details?.get("engineName") as? String,
+                confidence = (transcriptCreated?.details?.get("confidence") as? Number)?.toDouble(),
+                confidenceAccepted = transcriptCreated?.details?.get("confidenceAccepted") as? Boolean,
+                sourceAudioQualityClassification = transcriptCreated?.details?.get("sourceAudioQualityClassification") as? String,
+                textFilePath = transcriptFile?.details?.get("textFilePath") as? String,
+                jsonFilePath = transcriptFile?.details?.get("jsonFilePath") as? String,
+            ),
+            artifacts = artifactResponses,
         )
+    }
 
 }

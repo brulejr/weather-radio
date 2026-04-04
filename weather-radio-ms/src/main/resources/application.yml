@@ -77,6 +77,8 @@ application:
     delete-artifact-files: true
     allowed-roots:
       - /path/to/weather-radio/artifacts
+    artifact-pruning-run-on-startup: true
+    artifact-pruning-scheduler-enabled: true
 
   transcription:
     enabled: true

@@ -33,6 +33,7 @@ import org.springframework.scheduling.annotation.Scheduled
 class AlertArtifactPruningScheduler(
     private val datafill: AlertStoreDatafill,
     private val retentionService: AlertArtifactRetentionService,
+    private val statusService: AlertArtifactPruneStatusService
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -59,20 +60,32 @@ class AlertArtifactPruningScheduler(
     }
 
     private suspend fun runPrune(source: String) {
-        val result = retentionService.pruneArtifacts()
+        val startedAt = statusService.recordStart(source)
 
-        log.info(
-            "Artifact prune run source={} alertsScanned={} alertsEligible={} alertsPruned={} artifactsRemoved={} filesDeleted={} filesMissing={} filesRejected={} dryRun={}",
-            source,
-            result.alertsScanned,
-            result.alertsEligible,
-            result.alertsPruned,
-            result.artifactsRemoved,
-            result.filesDeleted,
-            result.filesMissing,
-            result.filesRejected,
-            result.dryRun,
-        )
+        runCatching {
+            retentionService.pruneArtifacts()
+        }.onSuccess { result ->
+            statusService.recordSuccess(source, startedAt, result)
+            log.info(
+                "Artifact prune run source={} alertsScanned={} alertsEligible={} alertsPruned={} artifactsRemoved={} filesDeleted={} filesMissing={} filesRejected={} dryRun={}",
+                source,
+                result.alertsScanned,
+                result.alertsEligible,
+                result.alertsPruned,
+                result.artifactsRemoved,
+                result.filesDeleted,
+                result.filesMissing,
+                result.filesRejected,
+                result.dryRun,
+            )
+        }.onFailure { error ->
+            statusService.recordFailure(source, startedAt, error)
+            log.warn(
+                "Artifact prune run failed source={} reason={}",
+                source,
+                error.message,
+            )
+        }
     }
 
 }

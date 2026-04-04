@@ -29,6 +29,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.events.AlertArtifactStoredEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCapturePoorQualityEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
@@ -94,6 +95,7 @@ class AlertStoreFeature(
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptFileCreationFailedEvent> { handleTranscriptFileCreationFailed(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertTranscriptionSkippedEvent> { handleTranscriptionSkipped(it) }
         subscriptions += weatherRadioEventBus.subscribe<AlertAudioCaptureSkippedEvent> { handleAudioCaptureSkipped(it) }
+        subscriptions += weatherRadioEventBus.subscribe<AlertAudioCapturePoorQualityEvent> { handleAudioCapturePoorQuality(it) }
 
         weatherRadioEventBus.send(
             FeatureHeartbeatEvent(
@@ -441,6 +443,26 @@ class AlertStoreFeature(
                 createdAt = clock.instant(),
                 details = mapOf(
                     "reason" to event.reason,
+                ),
+            ),
+            source = event,
+        )
+    }
+
+    private suspend fun handleAudioCapturePoorQuality(event: AlertAudioCapturePoorQualityEvent) {
+        appendArtifact(
+            stationId = event.stationId,
+            alertId = event.alertId,
+            artifact = StoredAlertArtifact(
+                artifactType = "audio-capture-poor-quality",
+                createdAt = clock.instant(),
+                details = mapOf(
+                    "classification" to event.classification,
+                    "reasons" to event.reasons,
+                    "peakAmplitude" to event.peakAmplitude,
+                    "rmsAmplitude" to event.rmsAmplitude,
+                    "silenceFraction" to event.silenceFraction,
+                    "clippedFraction" to event.clippedFraction,
                 ),
             ),
             source = event,

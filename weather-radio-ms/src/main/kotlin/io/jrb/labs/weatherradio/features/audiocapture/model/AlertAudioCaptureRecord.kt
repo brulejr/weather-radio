@@ -40,4 +40,7 @@ data class AlertAudioCaptureRecord(
     val preRollFrameCount: Int = 0,
     val durationMillis: Long = 0,
     val wasPartial: Boolean = false,
+    val qualityMetrics: AudioQualityMetrics? = null,
+    val qualityClassification: String? = null,
+    val acceptableForTranscription: Boolean = true,
 )

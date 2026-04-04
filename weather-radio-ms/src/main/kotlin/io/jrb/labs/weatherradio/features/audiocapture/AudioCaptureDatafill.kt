@@ -54,6 +54,20 @@ data class AudioCaptureDatafill(
 
     val emitSkippedCaptureEvents: Boolean = true,
 
-    val audioFileWriteAttempts: Int = 2
+    val audioFileWriteAttempts: Int = 2,
+
+    val minimumRmsAmplitude: Double = 0.01,
+
+    val maximumSilenceFraction: Double = 0.95,
+
+    val maximumClippedFraction: Double = 0.05,
+
+    val silenceAmplitudeThreshold: Double = 0.002,
+
+    val clipAmplitudeThreshold: Double = 0.98,
+
+    val emitPoorQualityCaptureEvents: Boolean = true,
+
+    val allowPoorQualityTranscription: Boolean = true,
 
 )

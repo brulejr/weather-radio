@@ -22,38 +22,18 @@
  * SOFTWARE.
  */
 
-package io.jrb.labs.weatherradio.features.transcription
+package io.jrb.labs.weatherradio.features.audiocapture.port
 
-import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_TRANSCRIPTION
-import jakarta.validation.constraints.NotBlank
-import org.springframework.boot.context.properties.ConfigurationProperties
+import io.jrb.labs.weatherradio.features.audiocapture.model.AlertAudioCaptureRecord
+import io.jrb.labs.weatherradio.features.audiocapture.model.AudioQualityMetrics
 
-@ConfigurationProperties(prefix = CONFIG_PREFIX_TRANSCRIPTION)
-data class TranscriptionDatafill(
+interface AudioQualityAssessor {
+    fun assess(capture: AlertAudioCaptureRecord): AudioQualityAssessment
+}
 
-    val enabled: Boolean = true,
-
-    val syntheticMode: Boolean = true,
-
-    val includeDebugTranscriptDetails: Boolean = false,
-
-    val writeTranscriptFiles: Boolean = true,
-
-    @field:NotBlank
-    val artifactDirectory: String = "./data/artifacts",
-
-    val debugLogging: Boolean = false,
-
-    val normalizeTranscriptText: Boolean = true,
-
-    val preserveRawTranscriptText: Boolean = true,
-
-    val minimumTranscriptLength: Int = 1,
-
-    val emitTranscriptSkippedEvent: Boolean = true,
-
-    val defaultLanguage: String = "en",
-
-    val allowPoorQualityTranscription: Boolean = true
-
+data class AudioQualityAssessment(
+    val metrics: AudioQualityMetrics,
+    val classification: String,
+    val acceptableForTranscription: Boolean,
+    val reasons: List<String> = emptyList(),
 )

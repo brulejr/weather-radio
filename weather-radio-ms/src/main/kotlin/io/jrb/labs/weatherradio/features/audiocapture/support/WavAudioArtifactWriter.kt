@@ -68,6 +68,9 @@ class WavAudioArtifactWriter(
             byteLength = Files.size(outputPath),
             captureReason = capture.captureReason,
             wasPartial = capture.wasPartial,
+            qualityMetrics = capture.qualityMetrics,
+            qualityClassification = capture.qualityClassification,
+            acceptableForTranscription = capture.acceptableForTranscription,
         )
     }
 

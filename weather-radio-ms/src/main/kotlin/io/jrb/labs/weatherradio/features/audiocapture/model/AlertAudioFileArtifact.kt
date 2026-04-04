@@ -41,4 +41,7 @@ data class AlertAudioFileArtifact(
     val byteLength: Long,
     val captureReason: String? = null,
     val wasPartial: Boolean = false,
+    val qualityMetrics: AudioQualityMetrics? = null,
+    val qualityClassification: String? = null,
+    val acceptableForTranscription: Boolean = true,
 )

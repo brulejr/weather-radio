@@ -28,7 +28,9 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.FeatureDescriptors.CONFIG_PREFIX_AUDIO_CAPTURE
 import io.jrb.labs.weatherradio.features.audiocapture.port.AudioArtifactWriter
+import io.jrb.labs.weatherradio.features.audiocapture.port.AudioQualityAssessor
 import io.jrb.labs.weatherradio.features.audiocapture.service.AudioCaptureFeature
+import io.jrb.labs.weatherradio.features.audiocapture.support.DefaultAudioQualityAssessor
 import io.jrb.labs.weatherradio.features.audiocapture.support.WavAudioArtifactWriter
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -63,14 +65,20 @@ class AudioCaptureConfiguration {
         weatherRadioEventBus: WeatherRadioEventBus,
         datafill: AudioCaptureDatafill,
         audioArtifactWriter: AudioArtifactWriter,
+        audioQualityAssessor: AudioQualityAssessor,
         clock: Clock,
     ): AudioCaptureFeature = AudioCaptureFeature(
         systemEventBus = systemEventBus,
         weatherRadioEventBus = weatherRadioEventBus,
         datafill = datafill,
         audioArtifactWriter = audioArtifactWriter,
+        audioQualityAssessor = audioQualityAssessor,
         clock = clock,
     )
+
+    @Bean
+    fun audioQualityAssessor(datafill: AudioCaptureDatafill): AudioQualityAssessor =
+        DefaultAudioQualityAssessor(datafill)
 
     @Bean
     fun audioCaptureStartup(

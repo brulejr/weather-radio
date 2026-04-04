@@ -29,6 +29,7 @@ import io.jrb.labs.commons.eventbus.SystemEventBus
 import io.jrb.labs.commons.service.ControllableService
 import io.jrb.labs.weatherradio.domain.radio.AudioFrame
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureFailedEvent
+import io.jrb.labs.weatherradio.events.AlertAudioCapturePoorQualityEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureSkippedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCaptureStartedEvent
 import io.jrb.labs.weatherradio.events.AlertAudioCapturedEvent
@@ -41,6 +42,7 @@ import io.jrb.labs.weatherradio.events.WeatherRadioEventBus
 import io.jrb.labs.weatherradio.features.audiocapture.AudioCaptureDatafill
 import io.jrb.labs.weatherradio.features.audiocapture.model.AlertAudioCaptureRecord
 import io.jrb.labs.weatherradio.features.audiocapture.port.AudioArtifactWriter
+import io.jrb.labs.weatherradio.features.audiocapture.port.AudioQualityAssessor
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Duration
@@ -53,6 +55,7 @@ class AudioCaptureFeature(
     private val weatherRadioEventBus: WeatherRadioEventBus,
     private val datafill: AudioCaptureDatafill,
     private val audioArtifactWriter: AudioArtifactWriter,
+    private val audioQualityAssessor: AudioQualityAssessor,
     private val clock: Clock,
 ) : ControllableService(systemEventBus) {
 
@@ -214,7 +217,7 @@ class AudioCaptureFeature(
         val completedAt = clock.instant()
 
         val wasPartial = frames.size < datafill.minimumCapturedFrames
-        val record = AlertAudioCaptureRecord(
+        val baseRecord = AlertAudioCaptureRecord(
             alertId = metadata.alertId,
             stationId = metadata.stationId,
             startedAt = metadata.startedAt,
@@ -228,6 +231,31 @@ class AudioCaptureFeature(
             durationMillis = Duration.between(metadata.startedAt, completedAt).toMillis(),
             wasPartial = wasPartial,
         )
+
+        val quality = audioQualityAssessor.assess(baseRecord)
+
+        val record = baseRecord.copy(
+            qualityMetrics = quality.metrics,
+            qualityClassification = quality.classification,
+            acceptableForTranscription = quality.acceptableForTranscription,
+        )
+
+        if (!quality.acceptableForTranscription && datafill.emitPoorQualityCaptureEvents) {
+            weatherRadioEventBus.publish(
+                AlertAudioCapturePoorQualityEvent(
+                    stationId = metadata.stationId,
+                    alertId = metadata.alertId,
+                    classification = quality.classification,
+                    reasons = quality.reasons,
+                    peakAmplitude = quality.metrics.peakAmplitude,
+                    rmsAmplitude = quality.metrics.rmsAmplitude,
+                    silenceFraction = quality.metrics.silenceFraction,
+                    clippedFraction = quality.metrics.clippedFraction,
+                    correlationId = metadata.correlationId,
+                    causationId = metadata.causationId,
+                )
+            )
+        }
 
         weatherRadioEventBus.publish(
             AlertAudioCapturedEvent(
